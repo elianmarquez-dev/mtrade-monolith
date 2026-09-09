@@ -15,6 +15,29 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  getPaymentMethods() {
+    return [
+      {
+        id: 'credit_card',
+        name: 'Tarjeta de Crédito / Débito',
+        description: 'Visa, Mastercard, American Express con cifrado SSL 256-bit',
+        iconName: 'CreditCard',
+      },
+      {
+        id: 'paypal',
+        name: 'PayPal Checkout',
+        description: 'Pago seguro instantáneo a través de tu cuenta digital PayPal',
+        iconName: 'Wallet',
+      },
+      {
+        id: 'bank_transfer',
+        name: 'Transferencia Bancaria / SEPA',
+        description: 'Aprobación automática bancaria mediante pasarela inmediata',
+        iconName: 'Building2',
+      },
+    ];
+  }
+
   create(
     createPaymentDto: CreatePaymentDto & { userId: string },
     idempotencyKey: string,

@@ -1,0 +1,6 @@
+{
+  "name": "Modular E-Commerce",
+  "description": "Plataforma de comercio electrónico con interfaz React y Tailwind CSS integrada con arquitectura de monolito modular (auth, orders, payments, products, users).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
