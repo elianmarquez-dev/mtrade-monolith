@@ -1,0 +1,208 @@
+mtrade:
+
+mtrade es un software de ecommerce que se encarga de la compra y venta de productos.
+el objetivo es tener un proyecto listo para deploy e2e que demuestre los conocimientos
+de desarrollo backend, arquitectura, decisiones y deployment aws low cost.
+
+
+modulos iniciales:
+
+- auth: servicio de autenticacion, logout y autorizacion
+- products: servicio de productos donde el usuario podra ver sus productos,
+    crearlos, editarlos y eliminarlos
+- orders: servicio de ordenes donde el usuario podra ver sus ordenes,
+    crearlas, editarlas y eliminarlas
+- payments: servicio de pagos donde el usuario podra ver sus pagos,
+    crearlos y administrarlos
+- users: servicio de usuarios donde el usuario podra info de su usuarios,
+    editarlos y eliminarlos
+
+
+
+modulos futuros:
+
+- notifications: servicio de notificaciones donde el usuario podra ver sus notificaciones,
+
+- analytics: servicio de analytics donde el usuario podra ver sus analytics,
+
+- reports: servicio de reports donde el usuario podra ver sus reports,
+
+Inventory
+Notifications
+Shipping
+Search
+Billing
+Reviews
+Analytics
+
+base de datos:
+
+- postgresql con prisma
+
+// ==========================================
+// ORDERFLOW - SHARED POSTGRESQL
+// ==========================================
+
+// ==========================
+// AUTH SERVICE
+// ==========================
+
+Table auth_credentials {
+  id uuid [pk]
+  user_id uuid [not null, unique]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+
+// ==========================
+// USERS SERVICE
+// ==========================
+
+Table users {
+  id uuid [pk]
+  email varchar(255) [not null, unique]
+  first_name varchar(100)
+  last_name varchar(100)
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+
+// ==========================
+// PRODUCTS SERVICE
+// ==========================
+
+Table products {
+  id uuid [pk]
+  owner_id uuid [not null]
+  name varchar(255) [not null]
+  description text
+  price decimal(12,2) [not null]
+  stock int [not null, default: 0]
+  status varchar(30) [not null, default: 'ACTIVE']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Indexes {
+    owner_id
+    status
+    (owner_id, status)
+  }
+}
+
+
+// ==========================
+// ORDERS SERVICE
+// ==========================
+
+Table orders {
+  id uuid [pk]
+  user_id uuid [not null]
+  status varchar(30) [not null, default: 'PENDING']
+  total_amount decimal(12,2) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Indexes {
+    user_id
+    status
+    (user_id, created_at)
+  }
+}
+
+Table order_items {
+  id uuid [pk]
+  order_id uuid [not null]
+  product_id uuid [not null]
+  quantity int [not null]
+  unit_price decimal(12,2) [not null]
+  created_at timestamp [not null]
+
+  Indexes {
+    order_id
+    product_id
+  }
+}
+
+Ref: order_items.order_id > orders.id
+
+
+// ==========================
+// PAYMENTS SERVICE
+// ==========================
+
+Table payments {
+  id uuid [pk]
+  order_id uuid [not null]
+  user_id uuid [not null]
+  amount decimal(12,2) [not null]
+  status varchar(30) [not null, default: 'PENDING']
+  provider varchar(50)
+  provider_payment_id varchar(255)
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Indexes {
+    order_id
+    user_id
+    status
+    provider_payment_id
+  }
+}
+
+
+visualmente:
+
+                         PostgreSQL
+                    ┌──────────────────┐
+                    │   orderflow_db   │
+                    │                  │
+                    │ ┌──────────────┐ │
+                    │ │     users    │ │
+                    │ └──────────────┘ │
+                    │                  │
+                    │ ┌──────────────┐ │
+                    │ │auth_credentials││
+                    │ └──────────────┘ │
+                    │                  │
+                    │ ┌──────────────┐ │
+                    │ │   products   │ │
+                    │ └──────────────┘ │
+                    │                  │
+                    │ ┌──────────────┐ │
+                    │ │    orders    │ │
+                    │ └──────┬───────┘ │
+                    │        │         │
+                    │        ▼         │
+                    │ ┌──────────────┐ │
+                    │ │ order_items  │ │
+                    │ └──────────────┘ │
+                    │                  │
+                    │ ┌──────────────┐ │
+                    │ │   payments   │ │
+                    │ └──────────────┘ │
+                    └──────────────────┘
+
+       ┌────────┐  ┌───────┐  ┌──────────┐
+       │  Auth  │  │ Users │  │ Products │
+       └───┬────┘  └───┬───┘  └────┬─────┘
+           │           │           │
+           ▼           ▼           ▼
+      auth_credentials users     products
+
+                    ┌────────┐
+                    │ Orders │
+                    └───┬────┘
+                        │
+                        ▼
+                     orders
+                  order_items
+
+                    ┌─────────┐
+                    │ Payments│
+                    └────┬────┘
+                         ▼
+                      payments
