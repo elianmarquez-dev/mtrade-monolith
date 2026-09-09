@@ -10,7 +10,38 @@ describe('UsersService', () => {
 
   beforeEach(async () => {
     const users = new Map<string, any>();
+    const addresses = new Map<string, any>();
     const prismaMock = {
+      $transaction: jest.fn(async (callback) => callback({
+        address: {
+          updateMany: jest.fn(async ({ where, data }) => {
+            for (const address of addresses.values()) {
+              if (address.userId === where.userId && address.isDefault) {
+                address.isDefault = false;
+              }
+            }
+            return { count: 1 };
+          }),
+          create: jest.fn(async ({ data }) => {
+            const now = new Date();
+            const address = {
+              id: randomUUID(),
+              userId: data.userId,
+              label: data.label,
+              street: data.street,
+              city: data.city,
+              state: data.state,
+              postalCode: data.postalCode,
+              country: data.country,
+              isDefault: data.isDefault ?? false,
+              createdAt: now,
+              updatedAt: now,
+            };
+            addresses.set(address.id, address);
+            return address;
+          }),
+        },
+      })),
       user: {
         create: jest.fn(async ({ data }) => {
           if ([...users.values()].some((user) => user.email === data.email)) {
@@ -45,6 +76,27 @@ describe('UsersService', () => {
           if (!user) throw new NotFoundException('User not found');
           users.delete(where.id);
           return user;
+        }),
+      },
+      address: {
+        findMany: jest.fn(async ({ where }) => [...addresses.values()].filter((a) => a.userId === where.userId)),
+        create: jest.fn(async ({ data }) => {
+          const now = new Date();
+          const address = {
+            id: randomUUID(),
+            userId: data.userId,
+            label: data.label,
+            street: data.street,
+            city: data.city,
+            state: data.state,
+            postalCode: data.postalCode,
+            country: data.country,
+            isDefault: data.isDefault ?? false,
+            createdAt: now,
+            updatedAt: now,
+          };
+          addresses.set(address.id, address);
+          return address;
         }),
       },
     };
@@ -82,6 +134,30 @@ describe('UsersService', () => {
     await expect(service.create({ email: 'DUPLICATE@mtrade.dev' })).rejects.toThrow(
       ConflictException,
     );
+  });
+
+  it('should create and list a user address through the backend contract', async () => {
+    const user = await service.create({ email: 'address@mtrade.dev' });
+
+    const created = await service.createAddress(user.id, {
+      label: 'Casa',
+      street: 'Calle Mayor 1',
+      city: 'Madrid',
+      state: 'Madrid',
+      postalCode: '28001',
+      country: 'España',
+      isDefault: true,
+    });
+
+    expect(created).toMatchObject({
+      label: 'Casa',
+      city: 'Madrid',
+      isDefault: true,
+    });
+
+    const addresses = await service.findAddresses(user.id);
+    expect(addresses).toHaveLength(1);
+    expect(addresses[0]).toMatchObject({ city: 'Madrid' });
   });
 
   it('should update and remove users', async () => {
