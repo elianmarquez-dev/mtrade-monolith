@@ -19,6 +19,11 @@ import { UpdatePaymentDto } from './dto/update-payment.dto';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
+  @Get('methods')
+  getPaymentMethods() {
+    return this.paymentsService.getPaymentMethods();
+  }
+
   @Post()
   create(
     @Body() createPaymentDto: CreatePaymentDto,
