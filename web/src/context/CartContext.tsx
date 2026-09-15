@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { CartItem, Order, Product } from '../types';
+import { useAuth } from './AuthContext';
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
+  addItem: (product: Product, quantity?: number) => boolean;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -30,6 +31,7 @@ const CART_STORAGE_KEY = 'monolith_ecommerce_cart';
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { session, openAuthModal } = useAuth();
   const [items, setItems] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem(CART_STORAGE_KEY);
     if (saved) {
@@ -52,6 +54,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [items]);
 
   const addItem = (product: Product, quantity: number = 1) => {
+    if (!session) {
+      openAuthModal('login');
+      return false;
+    }
+
     setItems((prev) => {
       const existingIdx = prev.findIndex((item) => item.product.id === product.id);
       if (existingIdx > -1) {
@@ -63,6 +70,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return [...prev, { product, quantity: Math.min(product.stock, quantity) }];
     });
     setIsCartOpen(true);
+    return true;
   };
 
   const removeItem = (productId: string) => {
@@ -93,6 +101,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const closeCart = () => setIsCartOpen(false);
 
   const openCheckout = () => {
+    if (!session) {
+      openAuthModal('login');
+      return;
+    }
+
     setIsCartOpen(false);
     setIsCheckoutOpen(true);
   };

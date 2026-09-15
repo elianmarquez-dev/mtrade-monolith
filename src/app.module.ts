@@ -11,6 +11,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { MetricsGuard } from './auth/guards/metrics.guard';
 import { MetricsInterceptor } from './auth/interceptors/metrics.interceptor';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RateLimitGuard } from './auth/guards/rate-limit.guard';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { PrismaModule } from './prisma/prisma.module';
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: MetricsGuard },
+    { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_INTERCEPTOR, useClass: MetricsInterceptor },
   ],
