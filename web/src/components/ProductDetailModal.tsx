@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Star, ShoppingBag, Truck, ShieldCheck, ArrowRight, Check } from 'lucide-react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -10,18 +11,29 @@ interface ProductDetailModalProps {
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClose }) => {
   const { addItem, openCheckout } = useCart();
+  const { session, openAuthModal } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [addedSuccess, setAddedSuccess] = useState(false);
 
   if (!product) return null;
 
   const handleAddToCart = () => {
+    if (!session) {
+      openAuthModal('login');
+      return;
+    }
+
     addItem(product, quantity);
     setAddedSuccess(true);
     setTimeout(() => setAddedSuccess(false), 1600);
   };
 
   const handleBuyNow = () => {
+    if (!session) {
+      openAuthModal('login');
+      return;
+    }
+
     addItem(product, quantity);
     onClose();
     openCheckout();
