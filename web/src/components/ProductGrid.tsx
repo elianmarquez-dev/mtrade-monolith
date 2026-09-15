@@ -7,9 +7,10 @@ import { ProductCard } from './ProductCard';
 interface ProductGridProps {
   searchQuery: string;
   onQuickView: (product: Product) => void;
+  refreshSignal?: number;
 }
 
-export const ProductGrid: React.FC<ProductGridProps> = ({ searchQuery, onQuickView }) => {
+export const ProductGrid: React.FC<ProductGridProps> = ({ searchQuery, onQuickView, refreshSignal = 0 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(['Todos']);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
@@ -50,7 +51,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ searchQuery, onQuickVi
       }
     };
     fetchProducts();
-  }, [selectedCategory, searchQuery, sortBy, inStockOnly]);
+  }, [selectedCategory, searchQuery, sortBy, inStockOnly, refreshSignal]);
 
   const handleResetFilters = () => {
     setSelectedCategory('Todos');

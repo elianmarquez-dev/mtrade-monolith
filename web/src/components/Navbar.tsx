@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Search, User, Package, Layers, ShieldCheck, LogOut, ChevronDown, Menu, X, Sparkles } from 'lucide-react';
+import { ShoppingBag, Search, User, Package, Layers, ShieldCheck, LogOut, ChevronDown, Menu, X, Sparkles, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useMonolith } from '../context/MonolithContext';
@@ -7,9 +7,10 @@ import { useMonolith } from '../context/MonolithContext';
 interface NavbarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  onAddProduct: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange }) => {
+export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onAddProduct }) => {
   const { session, logout, openAuthModal, openProfileModal } = useAuth();
   const { totalItemsCount, openCart, openOrdersModal } = useCart();
   const { toggleInspector, logs } = useMonolith();
@@ -95,6 +96,17 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange }) =
             </button>
 
             {/* Orders Button */}
+            {session && (
+              <button
+                onClick={onAddProduct}
+                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-sm font-semibold transition"
+                title="Agregar producto al catálogo"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Agregar producto</span>
+              </button>
+            )}
+
             <button
               onClick={openOrdersModal}
               className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone-700 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition"

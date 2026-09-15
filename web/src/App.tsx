@@ -23,12 +23,15 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { OrdersModal } from './components/OrdersModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { AuthModal } from './components/AuthModal';
+import { AddProductModal } from './components/AddProductModal';
 import { MonolithInspector } from './components/MonolithInspector';
 import { Product, ServiceName } from './types';
 
 const MainLayout: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [productRefreshSignal, setProductRefreshSignal] = useState(0);
   const { openInspector, setSelectedServiceFilter, logs } = useMonolith();
 
   const handleOpenService = (service: ServiceName) => {
@@ -39,7 +42,11 @@ const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50/50 flex flex-col text-stone-900 font-sans selection:bg-emerald-100 selection:text-emerald-900">
       {/* Navbar with Monolith Status */}
-      <Navbar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <Navbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onAddProduct={() => setIsAddProductOpen(true)}
+      />
 
       {/* Hero & Monolith Modular Architecture Overview Banner */}
       <section className="bg-white border-b border-stone-200 py-8 px-4 sm:px-6 lg:px-8">
@@ -138,6 +145,7 @@ const MainLayout: React.FC = () => {
       <main className="flex-1">
         <ProductGrid
           searchQuery={searchQuery}
+          refreshSignal={productRefreshSignal}
           onQuickView={(prod) => setSelectedProduct(prod)}
         />
       </main>
@@ -227,6 +235,11 @@ const MainLayout: React.FC = () => {
       <OrdersModal />
       <UserProfileModal />
       <AuthModal />
+      <AddProductModal
+        isOpen={isAddProductOpen}
+        onClose={() => setIsAddProductOpen(false)}
+        onCreated={() => setProductRefreshSignal((current) => current + 1)}
+      />
       <MonolithInspector />
     </div>
   );
