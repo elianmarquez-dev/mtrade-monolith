@@ -3,6 +3,7 @@
 /node_modules
 web/node_modules
 /build
+/mtrade-arq/
 
 # Logs
 logs
@@ -28,7 +29,6 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
-./mtrade-arq/*
 
 # IDE - VSCode
 .vscode/*
