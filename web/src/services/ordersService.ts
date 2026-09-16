@@ -249,11 +249,12 @@ export const ordersService = {
 
   async updateOrderStatus(orderId: string, status: OrderStatus, paymentId?: string, paymentMethod?: string): Promise<Order> {
     const startTime = performance.now();
+    const apiStatus = status === 'paid' ? 'CONFIRMED' : status.toUpperCase();
 
     try {
       const response = await authFetch<any>(`/orders/${orderId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: status.toUpperCase(), paymentId, paymentMethod }),
+        body: JSON.stringify({ status: apiStatus }),
       });
 
       const normalized = {
@@ -274,7 +275,7 @@ export const ordersService = {
         shippingFee: 0,
         tax: 0,
         total: Number(response.totalAmount ?? 0),
-        status: response.status === 'PENDING' ? 'pending' : response.status,
+        status: status === 'paid' ? 'paid' : response.status === 'PENDING' ? 'pending' : response.status,
         paymentId,
         paymentMethod,
         createdAt: response.createdAt,
@@ -282,11 +283,11 @@ export const ordersService = {
 
       telemetry.log({ service: 'orders', method: 'PATCH', endpoint: `/api/orders/${orderId}/status`, status: 200, durationMs: Math.round(performance.now() - startTime), requestPayload: { status, paymentId, paymentMethod }, responsePayload: { orderId: normalized.id, updatedStatus: normalized.status } });
       return normalized;
-    } catch {
+    } catch (error) {
       const orders = getStoredOrders();
       const index = orders.findIndex((o) => o.id === orderId);
       if (index === -1) {
-        throw new Error(`Order ${orderId} not found`);
+        throw error;
       }
 
       const order = orders[index];
