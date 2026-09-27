@@ -44,21 +44,19 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-### Docker development and production
+### Docker Compose
 
 Copy `.env.example` to `.env`. Docker Compose reads `NODE_ENV` from `.env`:
 
 ```bash
-# Development: bind mounts source files and runs Nest in watch mode
+# Build and run the production-like images locally
 docker compose up --build
-
-# Production: edit .env and set NODE_ENV=production, then rebuild
-docker compose up --build -d
 ```
 
-In development, changes under `src/` are picked up automatically. For
-production, Compose runs the compiled `dist` output with `start:prod` and does
-not use the watcher. Set a strong `JWT_SECRET` and non-default passwords in
+Compose runs the compiled backend image and the Nginx frontend image. Changes
+to source files require rebuilding the affected image. For a development
+watcher, run the Nest and Vite commands directly from their respective
+directories. Set a strong `JWT_SECRET` and non-default passwords in
 production.
 
 ## Database and monitoring
@@ -93,6 +91,58 @@ $ npm run test:cov
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
+### AWS ECS
+
+The backend and frontend are independent production images. Build and publish
+them to ECR from the repository root:
+
+```bash
+docker build -t mtrade-api .
+docker build --build-arg VITE_API_BASE_URL=/api -t mtrade-web ./web
+```
+
+Run the API as an ECS service on port `3000` with the container health check
+`/api/health`. The Vite frontend is built as static files and served from the
+private S3 bucket through CloudFront. CloudFront forwards `/api/*` to the API
+ALB, allowing the frontend to use the default `VITE_API_BASE_URL=/api` without
+embedding an environment-specific hostname.
+
+Inject `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, and `NODE_ENV=production`
+from AWS Secrets Manager or SSM Parameter Store. `DATABASE_URL` should point
+to an RDS/Aurora PostgreSQL instance, not the Compose `postgres` hostname.
+Apply Prisma migrations as a release task before shifting traffic to a new
+API revision:
+
+```bash
+npx prisma migrate deploy
+```
+
+The repository includes `mtrade.yml`, which provisions the VPC, private RDS
+PostgreSQL, ECS/Fargate API, ALB, and a private S3 bucket served by CloudFront.
+The deploy script creates the ECR repository when needed. The complete first
+deployment can be run after configuring AWS credentials and Docker:
+
+```bash
+export AWS_REGION=us-east-1
+export DB_PASSWORD='use-a-strong-password-here'
+export JWT_SECRET="$(openssl rand -base64 48)"
+./deploy-aws.sh
+```
+
+The script builds the frontend and backend, publishes the backend image,
+deploys the stack with the new image, waits for ECS stability, builds the Vite
+frontend with `VITE_API_BASE_URL=/api`,
+uploads `web/dist` to S3, and invalidates CloudFront. CloudFront serves the
+static files from S3 and forwards `/api/*` to the ALB, so the browser uses one
+HTTPS origin. Subsequent releases reuse the same command;
+the immutable ECR tag is generated from the UTC timestamp.
+
+For local production-like validation, `docker compose up --build` starts the
+frontend at `http://localhost:5173` and the API at `http://localhost:3000`.
+The local frontend points directly to the API; ECS builds should override
+`VITE_API_BASE_URL=/api` because the ALB handles path-based routing there.
+
+When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment).
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 ```bash

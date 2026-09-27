@@ -1,6 +1,6 @@
 import { Product, ProductFilter, UserSession, UserProfile, Order, PaymentMethodOption, PaymentTransaction, ProcessPaymentPayload, UserAddress, RegisterPayload, LoginCredentials, CartItem, OrderStatus } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const buildApiUrl = (path: string) => {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;

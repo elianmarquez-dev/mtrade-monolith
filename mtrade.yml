@@ -1,0 +1,595 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: MTrade - ECS Fargate + RDS PostgreSQL + ALB
+
+Parameters:
+  ImageTag:
+    Type: String
+    Default: latest
+
+  ECRRepositoryName:
+    Type: String
+    Default: mtrade/monolith
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 16
+
+  JWTSecret:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+
+  AdditionalCorsOrigin:
+    Type: String
+    Default: ''
+
+  DesiredCount:
+    Type: Number
+    Default: 1
+    MinValue: 0
+
+Resources:
+
+  # ============================================================
+  # VPC
+  # ============================================================
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: mtrade-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRouteA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetA
+
+  PublicRouteB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetB
+
+  # ============================================================
+  # Security Groups
+  # ============================================================
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: MTrade ALB
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: MTrade ECS
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: MTrade PostgreSQL
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+
+  # ============================================================
+  # RDS PostgreSQL
+  # ============================================================
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: MTrade PostgreSQL subnet group
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+
+  PostgreSQL:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: mtrade-postgres
+      Engine: postgres
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      MaxAllocatedStorage: 50
+      StorageType: gp3
+
+      DBName: mtrade_db
+      MasterUsername: mtrade_user
+      MasterUserPassword: !Ref DBPassword
+
+      Port: 5432
+      PubliclyAccessible: false
+      MultiAZ: false
+
+      BackupRetentionPeriod: 1
+
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+
+  AppSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${AWS::StackName}/application-managed'
+      Description: Database connection and JWT secret for the MTrade application
+      SecretString: !Sub
+        - '{"DATABASE_URL":"postgresql://mtrade_user:${DBPassword}@${DBHost}:5432/mtrade_db?schema=public","JWT_SECRET":"${JWTSecret}"}'
+        - DBHost: !GetAtt PostgreSQL.Endpoint.Address
+
+  # ============================================================
+  # Frontend (S3 + CloudFront)
+  # ============================================================
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  FrontendOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-frontend-oac'
+        Description: Access control for the private frontend bucket
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: MTrade frontend
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: frontend-s3
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt FrontendOriginAccessControl.Id
+          - Id: backend-alb
+            DomainName: !GetAtt ALB.DNSName
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+              HTTPPort: 80
+              HTTPSPort: 443
+        DefaultCacheBehavior:
+          TargetOriginId: frontend-s3
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: backend-alb
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Type
+                - Idempotency-Key
+                - Origin
+                - Accept
+                - X-Requested-With
+            MinTTL: 0
+            DefaultTTL: 0
+            MaxTTL: 0
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Join
+              - ''
+              - - !GetAtt FrontendBucket.Arn
+                - /*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
+
+  # ============================================================
+  # CloudWatch Logs
+  # ============================================================
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/ecs/mtrade
+      RetentionInDays: 7
+
+  # ============================================================
+  # ECS Cluster
+  # ============================================================
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: mtrade-cluster
+
+  # ============================================================
+  # IAM
+  # ============================================================
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: mtrade-ecs-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: ReadMTradeSecrets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref AppSecret
+
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: mtrade-ecs-task-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  # ============================================================
+  # Application Load Balancer
+  # ============================================================
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: mtrade-alb
+      Scheme: internet-facing
+      Type: application
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: mtrade-targets
+      VpcId: !Ref VPC
+      TargetType: ip
+      Protocol: HTTP
+      Port: 3000
+
+      HealthCheckEnabled: true
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: traffic-port
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+      Matcher:
+        HttpCode: '200'
+
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  # ============================================================
+  # ECS Task Definition
+  # ============================================================
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: mtrade
+      NetworkMode: awsvpc
+
+      RequiresCompatibilities:
+        - FARGATE
+
+      Cpu: '512'
+      Memory: '1024'
+
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+
+      ContainerDefinitions:
+
+        - Name: Main
+
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${ECRRepositoryName}:${ImageTag}'
+
+          Essential: true
+
+          Command:
+            - sh
+            - -c
+            - npx --no-install prisma migrate deploy && node dist/main.js
+
+          PortMappings:
+            - ContainerPort: 3000
+              HostPort: 3000
+              Protocol: tcp
+
+          Environment:
+
+            - Name: NODE_ENV
+              Value: production
+
+            - Name: PORT
+              Value: '3000'
+
+            - Name: APP_PORT
+              Value: '3000'
+
+            - Name: POSTGRES_DB
+              Value: mtrade_db
+
+            - Name: POSTGRES_USER
+              Value: mtrade_user
+
+            - Name: POSTGRES_PORT
+              Value: '5432'
+
+            - Name: RATE_LIMIT_BUCKET_CAPACITY
+              Value: '60'
+
+            - Name: RATE_LIMIT_REFILL_PER_SECOND
+              Value: '2'
+
+            - Name: CORS_ORIGIN
+              Value: !Join
+                - ','
+                - - !Sub 'https://${CloudFrontDistribution.DomainName}'
+                  - !Ref AdditionalCorsOrigin
+
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub '${AppSecret}:DATABASE_URL::'
+            - Name: JWT_SECRET
+              ValueFrom: !Sub '${AppSecret}:JWT_SECRET::'
+
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  # ============================================================
+  # ECS Service
+  # ============================================================
+
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - HTTPListener
+      - PostgreSQL
+
+    Properties:
+      ServiceName: mtrade
+      Cluster: !Ref ECSCluster
+
+      LaunchType: FARGATE
+      DesiredCount: !Ref DesiredCount
+
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+
+          SecurityGroups:
+            - !Ref ECSSecurityGroup
+
+          Subnets:
+            - !Ref PublicSubnetA
+            - !Ref PublicSubnetB
+
+      TaskDefinition: !Ref TaskDefinition
+
+      LoadBalancers:
+        - ContainerName: Main
+          ContainerPort: 3000
+          TargetGroupArn: !Ref TargetGroup
+
+# ==============================================================
+# Outputs
+# ==============================================================
+
+Outputs:
+
+  ApplicationURL:
+    Description: MTrade application
+    Value: !Sub 'http://${ALB.DNSName}'
+
+  ALBDNS:
+    Value: !GetAtt ALB.DNSName
+
+  ECSCluster:
+    Value: !Ref ECSCluster
+
+  BackendImageRepositoryUri:
+    Description: ECR repository for the backend image
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${ECRRepositoryName}'
+
+  FrontendBucketName:
+    Description: Private S3 bucket for the Vite build
+    Value: !Ref FrontendBucket
+
+  FrontendURL:
+    Description: CloudFront URL for the frontend
+    Value: !Sub 'https://${CloudFrontDistribution.DomainName}'
+
+  CloudFrontDistributionId:
+    Description: CloudFront distribution ID for cache invalidations
+    Value: !Ref CloudFrontDistribution
+
+  BackendURL:
+    Description: Public URL for the backend ALB
+    Value: !Sub 'http://${ALB.DNSName}'
+
+  ECSService:
+    Value: !Ref ECSService
+
+  RDSHost:
+    Description: PostgreSQL endpoint
+    Value: !GetAtt PostgreSQL.Endpoint.Address
+
+  RDSDatabase:
+    Value: mtrade_db
+
+  AppSecretArn:
+    Description: Secrets Manager ARN used by the ECS task
+    Value: !Ref AppSecret

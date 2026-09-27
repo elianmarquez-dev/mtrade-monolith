@@ -65,6 +65,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runtime
     container_name: mtrade-app
     restart: unless-stopped
     env_file:
@@ -77,19 +78,6 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:3003,http://127.0.0.1:3003}
     ports:
       - '${APP_PORT}:3000'
-    volumes:
-      - .:/app
-      - app_node_modules:/app/node_modules
-    command:
-      - sh
-      - -c
-      - >-
-        npx prisma generate &&
-        if [ "$${NODE_ENV}" = "development" ]; then
-          npm run start:dev;
-        else
-          npm run start:prod;
-        fi
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,8 +87,21 @@ services:
       timeout: 10s
       retries: 5
 
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000/api}
+    container_name: mtrade-web
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT:-5173}:8080'
+    depends_on:
+      app:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
-  app_node_modules:
