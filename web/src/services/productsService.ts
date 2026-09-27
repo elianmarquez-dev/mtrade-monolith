@@ -2,6 +2,21 @@ import { Product, ProductFilter } from '../types';
 import { telemetry } from './telemetry';
 import { authFetch, normalizeProduct } from './apiClient';
 
+function extractProductList(response: unknown): any[] {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (response && typeof response === 'object') {
+    const payload = response as { data?: unknown; products?: unknown; items?: unknown };
+    if (Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload.products)) return payload.products;
+    if (Array.isArray(payload.items)) return payload.items;
+  }
+
+  throw new Error('Products Service returned an invalid product list');
+}
+
 export const productsService = {
   async createProduct(payload: { name: string; description?: string; price: number; stock: number; category?: string; imageUrl?: string; rating?: number; reviewsCount?: number; sku?: string; isFeatured?: boolean; tags?: string[] }): Promise<Product> {
     const product = await authFetch<any>('/products', {
@@ -46,10 +61,11 @@ export const productsService = {
     if (filter?.inStockOnly) query.set('inStockOnly', 'true');
     if (filter?.sortBy) query.set('sortBy', filter.sortBy);
 
-    const response = await authFetch<any[]>('/products' + (query.toString() ? `?${query}` : ''));
-    const products = response.map(normalizeProduct);
+    const response = await authFetch<unknown>('/products' + (query.toString() ? `?${query}` : ''));
+    const productRows = extractProductList(response);
+    const products = productRows.map(normalizeProduct);
 
-    telemetry.log({ service: 'products', method: 'GET', endpoint: '/api/products' + (filter?.category ? `?category=${encodeURIComponent(filter.category)}` : ''), status: 200, durationMs: Math.round(performance.now() - startTime), requestPayload: filter || {}, responsePayload: { count: products.length, totalAvailable: response.length } });
+    telemetry.log({ service: 'products', method: 'GET', endpoint: '/api/products' + (filter?.category ? `?category=${encodeURIComponent(filter.category)}` : ''), status: 200, durationMs: Math.round(performance.now() - startTime), requestPayload: filter || {}, responsePayload: { count: products.length, totalAvailable: productRows.length } });
 
     return products;
   },
