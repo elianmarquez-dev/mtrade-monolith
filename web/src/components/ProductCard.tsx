@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Star, ShoppingBag, Eye, Check, AlertCircle } from 'lucide-react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ProductCardProps {
   product: Product;
@@ -10,6 +11,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const { addItem } = useCart();
+  const { t } = useLanguage();
   const [justAdded, setJustAdded] = useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -51,7 +53,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
           )}
           {product.isFeatured && (
             <span className="bg-stone-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded shadow-sm tracking-wide uppercase">
-              Destacado
+              {t('Destacado')}
             </span>
           )}
         </div>
@@ -66,7 +68,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
             className="bg-white text-stone-900 px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-md hover:bg-stone-50 flex items-center gap-1.5 transition transform translate-y-2 group-hover:translate-y-0"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>Vista Rápida</span>
+            <span>{t('Vista Rápida')}</span>
           </button>
         </div>
 
@@ -74,15 +76,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
         <div className="absolute bottom-2.5 right-2.5">
           {isOutOfStock ? (
             <span className="bg-rose-600/90 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded">
-              Agotado
+              {t('Agotado')}
             </span>
           ) : isLowStock ? (
             <span className="bg-amber-600/90 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded">
-              ¡Últimas {product.stock} unids!
+              {t('¡Últimas {count} unids!', { count: product.stock })}
             </span>
           ) : (
             <span className="bg-stone-900/75 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded">
-              Stock: {product.stock}
+              {t('Stock: {count}', { count: product.stock })}
             </span>
           )}
         </div>
@@ -145,12 +147,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
             {justAdded ? (
               <>
                 <Check className="w-3.5 h-3.5" />
-                <span>Agregado</span>
+                <span>{t('Agregado')}</span>
               </>
             ) : (
               <>
                 <ShoppingBag className="w-3.5 h-3.5" />
-                <span>Añadir</span>
+                <span>{t('Añadir')}</span>
               </>
             )}
           </button>

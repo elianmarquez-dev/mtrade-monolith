@@ -3,6 +3,7 @@ import { ShoppingBag, Search, User, Package, Layers, ShieldCheck, LogOut, Chevro
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useMonolith } from '../context/MonolithContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NavbarProps {
   searchQuery: string;
@@ -14,6 +15,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
   const { session, logout, openAuthModal, openProfileModal } = useAuth();
   const { totalItemsCount, openCart, openOrdersModal } = useCart();
   const { toggleInspector, logs } = useMonolith();
+  const { language, setLanguage, t } = useLanguage();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -26,7 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
           <div className="flex items-center space-x-3">
             <span className="inline-flex items-center gap-1.5 text-stone-300 font-medium">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              Monolito Modular Backend: 5 Servicios (auth • users • products • orders • payments)
+              {t('Monolito Modular Backend: 5 Servicios (auth • users • products • orders • payments)')}
             </span>
           </div>
 
@@ -34,10 +36,10 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
             <button
               onClick={toggleInspector}
               className="inline-flex items-center gap-1.5 text-stone-300 hover:text-white bg-stone-800 hover:bg-stone-700 px-2.5 py-0.5 rounded text-xs transition cursor-pointer"
-              title="Abrir Inspector de Servicios Monolito"
+              title={t('Abrir Inspector de Servicios Monolito')}
             >
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Inspector de API ({logs.length} reqs)</span>
+              <span>{t('Inspector de API ({count} reqs)', { count: logs.length })}</span>
             </button>
           </div>
         </div>
@@ -54,10 +56,10 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
               </div>
               <div className="leading-tight">
                 <span className="font-extrabold text-lg text-stone-900 tracking-tight block">
-                  MODULAR<span className="text-emerald-600">.STORE</span>
+                  MTrade App
                 </span>
                 <span className="text-[10px] text-stone-500 font-medium tracking-wide block uppercase">
-                  Modular Monolith Platform
+                  {t('Modular Monolith Platform')}
                 </span>
               </div>
             </div>
@@ -70,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
                 type="text"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Buscar productos por nombre, categoría o SKU..."
+                placeholder={t('Buscar productos por nombre, categoría o SKU...')}
                 className="w-full bg-stone-100 text-stone-900 text-sm rounded-lg pl-10 pr-9 py-2 border border-transparent focus:border-stone-400 focus:bg-white focus:outline-none transition"
               />
               <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -87,6 +89,20 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
 
           {/* Actions & Navigation */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+            <div role="group" aria-label={t('Language')} className="inline-flex h-9 items-center rounded-lg border border-stone-200 bg-white p-0.5 text-xs font-bold">
+              {(['en', 'es'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-label={option === 'en' ? 'English' : 'Español'}
+                  aria-pressed={language === option}
+                  onClick={() => setLanguage(option)}
+                  className={`h-8 min-w-8 rounded-md px-1.5 transition ${language === option ? 'bg-stone-900 text-white' : 'text-stone-500 hover:bg-stone-100'}`}
+                >
+                  {option.toUpperCase()}
+                </button>
+              ))}
+            </div>
             {/* Mobile Search Toggle */}
             <button
               onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
@@ -100,30 +116,30 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
               <button
                 onClick={onAddProduct}
                 className="flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-sm font-semibold transition"
-                title="Agregar producto al catálogo"
+                title={t('Agregar producto al catálogo')}
               >
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Agregar producto</span>
+                <span className="hidden sm:inline">{t('Agregar producto')}</span>
               </button>
             )}
 
             <button
               onClick={openOrdersModal}
               className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone-700 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition"
-              title="Ver mis pedidos creados en Orders Service"
+              title={t('Ver mis pedidos creados en Orders Service')}
             >
               <Package className="w-4 h-4 text-stone-500" />
-              <span className="hidden sm:inline">Mis Pedidos</span>
+              <span className="hidden sm:inline">{t('Mis Pedidos')}</span>
             </button>
 
             {/* Cart Button */}
             <button
               onClick={openCart}
               className="relative flex items-center gap-2 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-lg text-sm font-medium transition cursor-pointer"
-              title="Abrir Carrito"
+              title={t('Abrir Carrito')}
             >
               <ShoppingBag className="w-4 h-4 text-stone-800" />
-              <span className="hidden sm:inline">Carrito</span>
+              <span className="hidden sm:inline">{t('Carrito')}</span>
               {totalItemsCount > 0 && (
                 <span className="bg-emerald-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
                   {totalItemsCount}
@@ -162,7 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
                       <div className="mt-1 flex items-center gap-1.5">
                         <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
                         <span className="text-[11px] font-medium text-stone-600 uppercase tracking-wide">
-                          Rol: {session.role}
+                          {t('Rol: {role}', { role: session.role })}
                         </span>
                       </div>
                     </div>
@@ -176,7 +192,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
                         className="w-full text-left px-3 py-2 text-stone-700 hover:bg-stone-50 flex items-center gap-2"
                       >
                         <User className="w-4 h-4 text-stone-400" />
-                        <span>Mi Perfil y Direcciones</span>
+                        <span>{t('Mi Perfil y Direcciones')}</span>
                       </button>
                       <button
                         onClick={() => {
@@ -186,7 +202,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
                         className="w-full text-left px-3 py-2 text-stone-700 hover:bg-stone-50 flex items-center gap-2"
                       >
                         <Package className="w-4 h-4 text-stone-400" />
-                        <span>Historial de Pedidos</span>
+                        <span>{t('Historial de Pedidos')}</span>
                       </button>
                       <button
                         onClick={() => {
@@ -196,7 +212,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
                         className="w-full text-left px-3 py-2 text-stone-700 hover:bg-stone-50 flex items-center gap-2"
                       >
                         <Layers className="w-4 h-4 text-emerald-500" />
-                        <span>Monolito API Inspector</span>
+                        <span>{t('Monolito API Inspector')}</span>
                       </button>
                     </div>
 
@@ -209,7 +225,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
                         className="w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>Cerrar Sesión (Auth Service)</span>
+                        <span>{t('Cerrar Sesión (Auth Service)')}</span>
                       </button>
                     </div>
                   </div>
@@ -221,7 +237,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
                 className="flex items-center gap-1.5 px-3.5 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-lg text-sm font-semibold transition cursor-pointer"
               >
                 <User className="w-4 h-4" />
-                <span>Ingresar</span>
+                <span>{t('Ingresar')}</span>
               </button>
             )}
           </div>
@@ -235,7 +251,7 @@ export const Navbar: React.FC<NavbarProps> = ({ searchQuery, onSearchChange, onA
                 type="text"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Buscar productos..."
+                placeholder={t('Buscar productos...')}
                 className="w-full bg-stone-100 text-stone-900 text-sm rounded-lg pl-10 pr-9 py-2 border border-transparent focus:border-stone-400 focus:bg-white focus:outline-none"
               />
               <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />

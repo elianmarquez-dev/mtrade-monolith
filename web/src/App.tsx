@@ -26,6 +26,7 @@ import { AuthModal } from './components/AuthModal';
 import { AddProductModal } from './components/AddProductModal';
 import { MonolithInspector } from './components/MonolithInspector';
 import { Product, ServiceName } from './types';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
 const MainLayout: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +34,7 @@ const MainLayout: React.FC = () => {
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [productRefreshSignal, setProductRefreshSignal] = useState(0);
   const { openInspector, setSelectedServiceFilter, logs } = useMonolith();
+  const { t } = useLanguage();
 
   const handleOpenService = (service: ServiceName) => {
     setSelectedServiceFilter(service);
@@ -55,13 +57,13 @@ const MainLayout: React.FC = () => {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full mb-3 border border-emerald-200">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Arquitectura Monolito Modular • 5 Servicios de Dominio</span>
+                <span>{t('Arquitectura Monolito Modular • 5 Servicios de Dominio')}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
-                Plataforma E-Commerce Modular
+                {t('Plataforma E-Commerce Modular')}
               </h1>
               <p className="mt-2 text-sm text-stone-600 leading-relaxed">
-                Interfaz desacoplada en React y Tailwind CSS conectada a los servicios independientes de <strong>auth</strong>, <strong>users</strong>, <strong>products</strong>, <strong>orders</strong> y <strong>payments</strong>.
+                {t('Interfaz desacoplada en React y Tailwind CSS conectada a los servicios independientes de')} <strong>auth</strong>, <strong>users</strong>, <strong>products</strong>, <strong>orders</strong> {t('and')} <strong>payments</strong>.
               </p>
             </div>
 
@@ -70,70 +72,70 @@ const MainLayout: React.FC = () => {
               <button
                 onClick={() => handleOpenService('auth')}
                 className="group flex items-center gap-2 bg-stone-50 hover:bg-purple-50 hover:border-purple-300 border border-stone-200 px-3 py-2 rounded-xl text-xs transition cursor-pointer"
-                title="Ver detalles del módulo Auth"
+                title={t('Ver detalles del módulo Auth')}
               >
                 <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
                   <Lock className="w-3.5 h-3.5" />
                 </div>
                 <div className="text-left">
                   <span className="font-bold text-stone-900 block leading-none">auth</span>
-                  <span className="text-[10px] text-stone-500 font-medium">JWT & Sesión</span>
+                  <span className="text-[10px] text-stone-500 font-medium">{t('JWT & Sesión')}</span>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOpenService('users')}
                 className="group flex items-center gap-2 bg-stone-50 hover:bg-blue-50 hover:border-blue-300 border border-stone-200 px-3 py-2 rounded-xl text-xs transition cursor-pointer"
-                title="Ver detalles del módulo Users"
+                title={t('Ver detalles del módulo Users')}
               >
                 <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
                   <Users className="w-3.5 h-3.5" />
                 </div>
                 <div className="text-left">
                   <span className="font-bold text-stone-900 block leading-none">users</span>
-                  <span className="text-[10px] text-stone-500 font-medium">Perfiles & Direcciones</span>
+                  <span className="text-[10px] text-stone-500 font-medium">{t('Perfiles & Direcciones')}</span>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOpenService('products')}
                 className="group flex items-center gap-2 bg-stone-50 hover:bg-emerald-50 hover:border-emerald-300 border border-stone-200 px-3 py-2 rounded-xl text-xs transition cursor-pointer"
-                title="Ver detalles del módulo Products"
+                title={t('Ver detalles del módulo Products')}
               >
                 <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
                   <Box className="w-3.5 h-3.5" />
                 </div>
                 <div className="text-left">
                   <span className="font-bold text-stone-900 block leading-none">products</span>
-                  <span className="text-[10px] text-stone-500 font-medium">Stock & Catálogo</span>
+                  <span className="text-[10px] text-stone-500 font-medium">{t('Stock & Catálogo')}</span>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOpenService('orders')}
                 className="group flex items-center gap-2 bg-stone-50 hover:bg-amber-50 hover:border-amber-300 border border-stone-200 px-3 py-2 rounded-xl text-xs transition cursor-pointer"
-                title="Ver detalles del módulo Orders"
+                title={t('Ver detalles del módulo Orders')}
               >
                 <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
                   <Package className="w-3.5 h-3.5" />
                 </div>
                 <div className="text-left">
                   <span className="font-bold text-stone-900 block leading-none">orders</span>
-                  <span className="text-[10px] text-stone-500 font-medium">Carrito & Estados</span>
+                  <span className="text-[10px] text-stone-500 font-medium">{t('Carrito & Estados')}</span>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOpenService('payments')}
                 className="group flex items-center gap-2 bg-stone-50 hover:bg-rose-50 hover:border-rose-300 border border-stone-200 px-3 py-2 rounded-xl text-xs transition cursor-pointer"
-                title="Ver detalles del módulo Payments"
+                title={t('Ver detalles del módulo Payments')}
               >
                 <div className="w-6 h-6 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
                   <CreditCard className="w-3.5 h-3.5" />
                 </div>
                 <div className="text-left">
                   <span className="font-bold text-stone-900 block leading-none">payments</span>
-                  <span className="text-[10px] text-stone-500 font-medium">Cobros & Pasarelas</span>
+                  <span className="text-[10px] text-stone-500 font-medium">{t('Cobros & Pasarelas')}</span>
                 </div>
               </button>
             </div>
@@ -161,7 +163,7 @@ const MainLayout: React.FC = () => {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </span>
           <Layers className="w-4 h-4 text-emerald-400" />
-          <span>Monolito API Inspector</span>
+          <span>{t('Monolito API Inspector')}</span>
           <span className="bg-stone-800 text-stone-300 text-[10px] px-2 py-0.5 rounded-full font-mono">
             {logs.length} reqs
           </span>
@@ -174,51 +176,51 @@ const MainLayout: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div className="space-y-2">
               <span className="font-black text-stone-900 text-sm tracking-tight block">
-                MODULAR<span className="text-emerald-600">.STORE</span>
+                MTrade App
               </span>
               <p className="leading-relaxed">
-                Plataforma de comercio electrónico basada en arquitectura de monolito modular con 5 servicios integrados: Auth, Users, Products, Orders y Payments.
+                {t('Plataforma de comercio electrónico basada en arquitectura de monolito modular con 5 servicios integrados: Auth, Users, Products, Orders y Payments.')}
               </p>
             </div>
 
             <div>
-              <span className="font-bold text-stone-900 block mb-2">Servicios del Monolito</span>
+              <span className="font-bold text-stone-900 block mb-2">{t('Servicios del Monolito')}</span>
               <ul className="space-y-1">
                 <li>• Auth Service (RFC 7519 JWT)</li>
-                <li>• Users Service (Gestión de perfiles)</li>
-                <li>• Products Service (Catálogo e inventario)</li>
-                <li>• Orders Service (Máquina de estados de pedidos)</li>
-                <li>• Payments Service (Pasarelas y cobros)</li>
+                <li>• {t('Users Service (Gestión de perfiles)')}</li>
+                <li>• {t('Products Service (Catálogo e inventario)')}</li>
+                <li>• {t('Orders Service (Máquina de estados de pedidos)')}</li>
+                <li>• {t('Payments Service (Pasarelas y cobros)')}</li>
               </ul>
             </div>
 
             <div>
-              <span className="font-bold text-stone-900 block mb-2">Pila Tecnológica Frontend</span>
+              <span className="font-bold text-stone-900 block mb-2">{t('Pila Tecnológica Frontend')}</span>
               <ul className="space-y-1">
-                <li>• React 19 con TypeScript</li>
-                <li>• Tailwind CSS moderno</li>
-                <li>• Lucide Icons para simbología técnica</li>
-                <li>• Inspector de telemetría HTTP en tiempo real</li>
+                <li>• {t('React 19 con TypeScript')}</li>
+                <li>• {t('Tailwind CSS moderno')}</li>
+                <li>• {t('Lucide Icons para simbología técnica')}</li>
+                <li>• {t('Inspector de telemetría HTTP en tiempo real')}</li>
               </ul>
             </div>
 
             <div>
-              <span className="font-bold text-stone-900 block mb-2">Garantía & Seguridad</span>
+              <span className="font-bold text-stone-900 block mb-2">{t('Garantía & Seguridad')}</span>
               <p className="leading-relaxed">
-                Manejo transaccional atómico con reserva de inventario previa a la confirmación de pago y emisión de comprobantes digitales.
+                {t('Manejo transaccional atómico con reserva de inventario previa a la confirmación de pago y emisión de comprobantes digitales.')}
               </p>
             </div>
           </div>
 
           <div className="pt-6 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p>© 2026 Modular E-Commerce Platform. Diseñado con React y Tailwind CSS.</p>
+            <p>{t('© 2026 Modular E-Commerce Platform. Diseñado con React y Tailwind CSS.')}</p>
             <div className="flex items-center gap-4 text-stone-600 font-medium">
-              <span>5 Servicios Activos</span>
+              <span>{t('5 Servicios Activos')}</span>
               <span>•</span>
-              <span>100% Sin Errores</span>
+              <span>{t('100% Sin Errores')}</span>
               <span>•</span>
               <button onClick={openInspector} className="text-emerald-700 hover:underline">
-                Abrir Inspector
+                {t('Abrir Inspector')}
               </button>
             </div>
           </div>
@@ -247,12 +249,14 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <MonolithProvider>
-          <MainLayout />
-        </MonolithProvider>
-      </CartProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <CartProvider>
+          <MonolithProvider>
+            <MainLayout />
+          </MonolithProvider>
+        </CartProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }

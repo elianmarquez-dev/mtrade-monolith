@@ -1,8 +1,10 @@
 import React from 'react';
 import { X, Trash2, ArrowRight, ShoppingBag, Truck, ShieldAlert } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export const CartDrawer: React.FC = () => {
+  const { t } = useLanguage();
   const {
     items,
     isCartOpen,
@@ -36,9 +38,9 @@ export const CartDrawer: React.FC = () => {
           <div className="p-5 border-b border-stone-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-stone-900" />
-              <h2 className="text-base font-bold text-stone-900">Carrito de Compras</h2>
+              <h2 className="text-base font-bold text-stone-900">{t('Carrito de Compras')}</h2>
               <span className="text-xs bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full font-semibold">
-                {items.length} {items.length === 1 ? 'ítem' : 'ítems'}
+                {items.length} {t(items.length === 1 ? 'ítem' : 'ítems')}
               </span>
             </div>
             <button
@@ -57,7 +59,7 @@ export const CartDrawer: React.FC = () => {
                   <div className="flex items-center justify-between text-stone-700 font-medium">
                     <span className="flex items-center gap-1.5">
                       <Truck className="w-3.5 h-3.5 text-emerald-600" />
-                      Agrega <strong className="text-stone-900">${amountForFreeShipping.toFixed(2)}</strong> para Envío Gratis
+                      {t('Agrega {amount} para Envío Gratis', { amount: `$${amountForFreeShipping.toFixed(2)}` })}
                     </span>
                     <span className="text-stone-500">{freeShippingPercent}%</span>
                   </div>
@@ -71,7 +73,7 @@ export const CartDrawer: React.FC = () => {
               ) : (
                 <div className="flex items-center gap-2 text-emerald-700 font-semibold">
                   <Truck className="w-4 h-4" />
-                  <span>¡Felicidades! Calificas para Envío Gratis a domicilio</span>
+                  <span>{t('¡Felicidades! Calificas para Envío Gratis a domicilio')}</span>
                 </div>
               )}
             </div>
@@ -84,15 +86,15 @@ export const CartDrawer: React.FC = () => {
                 <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 mb-3">
                   <ShoppingBag className="w-8 h-8" />
                 </div>
-                <h3 className="text-base font-bold text-stone-800">Tu carrito está vacío</h3>
+                <h3 className="text-base font-bold text-stone-800">{t('Tu carrito está vacío')}</h3>
                 <p className="text-xs text-stone-500 mt-1 max-w-xs">
-                  Explora nuestro catálogo con productos de alta tecnología y añade lo que te guste.
+                  {t('Explora nuestro catálogo con productos de alta tecnología y añade lo que te guste.')}
                 </p>
                 <button
                   onClick={closeCart}
                   className="mt-5 px-4 py-2 bg-stone-900 text-white rounded-xl text-xs font-semibold hover:bg-stone-800 transition"
                 >
-                  Continuar Comprando
+                  {t('Continuar Comprando')}
                 </button>
               </div>
             ) : (
@@ -116,7 +118,7 @@ export const CartDrawer: React.FC = () => {
                         <button
                           onClick={() => removeItem(product.id)}
                           className="text-stone-400 hover:text-rose-600 transition p-0.5"
-                          title="Eliminar artículo"
+                          title={t('Eliminar artículo')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -167,21 +169,21 @@ export const CartDrawer: React.FC = () => {
                   <span className="font-semibold text-stone-900">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Envío estimado</span>
+                  <span>{t('Envío estimado')}</span>
                   <span>
                     {shippingFee === 0 ? (
-                      <strong className="text-emerald-600 font-bold">GRATIS</strong>
+                      <strong className="text-emerald-600 font-bold">{t('GRATIS')}</strong>
                     ) : (
                       `$${shippingFee.toFixed(2)}`
                     )}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Impuestos (21% IVA)</span>
+                  <span>{t('Impuestos (21% IVA)')}</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-extrabold text-stone-900 pt-2 border-t border-stone-200">
-                  <span>Total Final</span>
+                  <span>{t('Total Final')}</span>
                   <span className="text-base text-emerald-800">${total.toFixed(2)}</span>
                 </div>
               </div>
@@ -190,12 +192,12 @@ export const CartDrawer: React.FC = () => {
                 onClick={openCheckout}
                 className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
               >
-                <span>Proceder al Pago</span>
+                <span>{t('Proceder al Pago')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               <p className="text-[11px] text-center text-stone-500 mt-2">
-                Conexión segura coordinada por Orders & Payments Services
+                {t('Conexión segura coordinada por Orders & Payments Services')}
               </p>
             </div>
           )}

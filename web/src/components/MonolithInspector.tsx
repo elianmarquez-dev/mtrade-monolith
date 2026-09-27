@@ -16,8 +16,10 @@ import {
 } from 'lucide-react';
 import { useMonolith } from '../context/MonolithContext';
 import { ServiceCallLog, ServiceName } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 export const MonolithInspector: React.FC = () => {
+  const { t } = useLanguage();
   const {
     isInspectorOpen,
     closeInspector,
@@ -80,14 +82,14 @@ export const MonolithInspector: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-bold tracking-tight">
-                  Monolito Modular Backend Inspector
+                  {t('Monolito Modular Backend Inspector')}
                 </h2>
                 <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  5/5 Servicios Activos
+                  {t('5/5 Servicios Activos')}
                 </span>
               </div>
               <p className="text-[11px] text-stone-400">
-                Supervisa las llamadas HTTP y límites entre módulos (auth, users, products, orders, payments)
+                {t('Supervisa las llamadas HTTP y límites entre módulos (auth, users, products, orders, payments)')}
               </p>
             </div>
           </div>
@@ -111,7 +113,7 @@ export const MonolithInspector: React.FC = () => {
             }`}
           >
             <Activity className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Feed de Solicitudes ({logs.length})</span>
+            <span>{t('Feed de Solicitudes ({count})', { count: logs.length })}</span>
           </button>
           <button
             onClick={() => setActiveTab('architecture')}
@@ -122,7 +124,7 @@ export const MonolithInspector: React.FC = () => {
             }`}
           >
             <Server className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Mapa de Arquitectura (5 Módulos)</span>
+            <span>{t('Mapa de Arquitectura (5 Módulos)')}</span>
           </button>
         </div>
 
@@ -132,10 +134,10 @@ export const MonolithInspector: React.FC = () => {
             <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs">
               <h3 className="font-bold text-stone-900 text-sm mb-1 flex items-center gap-1.5">
                 <Cpu className="w-4 h-4 text-emerald-600" />
-                <span>Estructura del Monolito Modular</span>
+                <span>{t('Estructura del Monolito Modular')}</span>
               </h3>
               <p className="text-stone-500 leading-relaxed">
-                A diferencia de los microservicios distribuidos, el <strong>monolito modular</strong> ejecuta los 5 dominios de negocio en una sola base de código desplegable, manteniendo fronteras lógicas y modelos de dominio estrictamente desacoplados.
+                {t('A diferencia de los microservicios distribuidos, el monolito modular ejecuta los 5 dominios de negocio en una sola base de código desplegable, manteniendo fronteras lógicas y modelos de dominio estrictamente desacoplados.')}
               </p>
             </div>
 
@@ -153,12 +155,12 @@ export const MonolithInspector: React.FC = () => {
                       </span>
                       <span className="font-mono text-[10px] text-stone-400">{srv.version}</span>
                       <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold">
-                        <CheckCircle2 className="w-3 h-3" /> Operativo
+                        <CheckCircle2 className="w-3 h-3" /> {t('Operativo')}
                       </span>
                     </div>
-                    <p className="text-stone-600 text-xs">{srv.description}</p>
+                    <p className="text-stone-600 text-xs">{t(srv.description)}</p>
                     <span className="text-[10px] text-stone-400 font-mono">
-                      {srv.endpointsCount} endpoints mapeados • Prefijo: /api/{srv.name}/*
+                      {srv.endpointsCount} {t('endpoints mapeados • Prefijo: /api/{service}/*', { service: srv.name })}
                     </span>
                   </div>
 
@@ -169,7 +171,7 @@ export const MonolithInspector: React.FC = () => {
                     }}
                     className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md shrink-0 ml-2"
                   >
-                    Ver Logs
+                    {t('Ver Logs')}
                   </button>
                 </div>
               ))}
@@ -177,15 +179,15 @@ export const MonolithInspector: React.FC = () => {
 
             {/* Visual Workflow Diagram */}
             <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs">
-              <span className="font-bold text-stone-900 block mb-2">Flujo de Comunicación Típico:</span>
+              <span className="font-bold text-stone-900 block mb-2">{t('Flujo de Comunicación Típico:')}</span>
               <div className="font-mono text-[11px] text-stone-700 space-y-1.5 bg-stone-100 p-3 rounded-lg">
-                <p className="text-purple-700">1. Client ➔ [auth] : POST /api/auth/login (JWT emitido)</p>
-                <p className="text-emerald-700">2. Client ➔ [products] : GET /api/products (Catálogo y stock)</p>
-                <p className="text-blue-700">3. Client ➔ [users] : GET /api/users/:id/addresses (Dirección)</p>
-                <p className="text-amber-700">4. Client ➔ [orders] : POST /api/orders (Creación orden)</p>
-                <p className="text-rose-700">5. Client ➔ [payments] : POST /api/payments/charge (Cobro orden)</p>
-                <p className="text-emerald-700">6. Monolith ➔ [products] : Deducción de stock</p>
-                <p className="text-amber-700">7. Monolith ➔ [orders] : Actualización de estado a 'paid'</p>
+                <p className="text-purple-700">{t('Client ➔ [auth] : POST /api/auth/login (JWT emitido)')}</p>
+                <p className="text-emerald-700">{t('Client ➔ [products] : GET /api/products (Catálogo y stock)')}</p>
+                <p className="text-blue-700">{t('Client ➔ [users] : GET /api/users/:id/addresses (Dirección)')}</p>
+                <p className="text-amber-700">{t('Client ➔ [orders] : POST /api/orders (Creación orden)')}</p>
+                <p className="text-rose-700">{t('Client ➔ [payments] : POST /api/payments/charge (Cobro orden)')}</p>
+                <p className="text-emerald-700">6. Monolith ➔ [products] : {t('Deducción de stock')}</p>
+                <p className="text-amber-700">7. Monolith ➔ [orders] : {t('Actualización de estado a \'paid\'')}</p>
               </div>
             </div>
           </div>
@@ -206,7 +208,7 @@ export const MonolithInspector: React.FC = () => {
                       : 'bg-white text-stone-600 hover:bg-stone-200'
                   }`}
                 >
-                  Todos ({logs.length})
+                  {t('Todos ({count})', { count: logs.length })}
                 </button>
                 {(['auth', 'users', 'products', 'orders', 'payments'] as ServiceName[]).map((srv) => (
                   <button
@@ -227,7 +229,7 @@ export const MonolithInspector: React.FC = () => {
                 <button
                   onClick={clearLogs}
                   className="p-1.5 text-stone-400 hover:text-rose-600 transition"
-                  title="Limpiar logs"
+                  title={t('Limpiar logs')}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -239,9 +241,9 @@ export const MonolithInspector: React.FC = () => {
               {filteredLogs.length === 0 ? (
                 <div className="py-16 text-center text-stone-400">
                   <Terminal className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="font-sans text-xs">No hay llamadas registradas para este filtro.</p>
+                  <p className="font-sans text-xs">{t('No hay llamadas registradas para este filtro.')}</p>
                   <p className="font-sans text-[11px] text-stone-400 mt-0.5">
-                    Interactúa con la tienda (añade productos, navega, haz checkout) para ver tráfico en tiempo real.
+                    {t('Interactúa con la tienda (añade productos, navega, haz checkout) para ver tráfico en tiempo real.')}
                   </p>
                 </div>
               ) : (
@@ -292,7 +294,7 @@ export const MonolithInspector: React.FC = () => {
                           {log.requestPayload && (
                             <div>
                               <span className="text-amber-400 font-semibold text-[10px] block mb-0.5">
-                                Payload de Solicitud (Request):
+                                {t('Payload de Solicitud (Request):')}
                               </span>
                               <pre className="overflow-x-auto text-stone-300 bg-stone-950 p-2 rounded text-[10px]">
                                 {JSON.stringify(log.requestPayload, null, 2)}
@@ -303,7 +305,7 @@ export const MonolithInspector: React.FC = () => {
                           {log.responsePayload && (
                             <div>
                               <span className="text-emerald-400 font-semibold text-[10px] block mb-0.5">
-                                Respuesta del Módulo (Response):
+                                {t('Respuesta del Módulo (Response):')}
                               </span>
                               <pre className="overflow-x-auto text-stone-300 bg-stone-950 p-2 rounded text-[10px]">
                                 {JSON.stringify(log.responsePayload, null, 2)}

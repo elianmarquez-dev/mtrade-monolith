@@ -3,8 +3,10 @@ import { X, User, MapPin, Key, Plus, Check, ShieldCheck, Phone, Mail } from 'luc
 import { useAuth } from '../context/AuthContext';
 import { usersService } from '../services';
 import { UserAddress } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 export const UserProfileModal: React.FC = () => {
+  const { t } = useLanguage();
   const { session, profile, isProfileModalOpen, closeProfileModal, refreshProfile, loginAsDemoUser, loginAsDemoAdmin } = useAuth();
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -32,7 +34,7 @@ export const UserProfileModal: React.FC = () => {
       await usersService.updateProfile(session.id, { name, phone });
       await refreshProfile();
       setIsEditingProfile(false);
-      setStatusMsg('Perfil actualizado correctamente en Users Service.');
+      setStatusMsg(t('Perfil actualizado correctamente en Users Service.'));
       setTimeout(() => setStatusMsg(null), 2500);
     } catch (err: any) {
       console.error(err);
@@ -55,7 +57,7 @@ export const UserProfileModal: React.FC = () => {
         country: 'España',
         isDefault: false
       });
-      setStatusMsg('Nueva dirección registrada en Users Service.');
+      setStatusMsg(t('Nueva dirección registrada en Users Service.'));
       setTimeout(() => setStatusMsg(null), 2500);
     } catch (err: any) {
       console.error(err);
@@ -70,7 +72,7 @@ export const UserProfileModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-stone-900" />
             <h2 className="text-base font-bold text-stone-900">
-              Mi Perfil y Cuenta (Users Service)
+              {t('Mi Perfil y Cuenta (Users Service)')}
             </h2>
           </div>
           <button
@@ -119,14 +121,14 @@ export const UserProfileModal: React.FC = () => {
 
             <div className="text-right">
               <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                Rol: {session.role}
+                {t('Rol:')} {session.role}
               </span>
               <div className="mt-2">
                 <button
                   onClick={() => setIsEditingProfile(!isEditingProfile)}
                   className="text-xs text-stone-600 hover:text-stone-900 font-medium underline"
                 >
-                  {isEditingProfile ? 'Cancelar' : 'Editar Datos'}
+                  {isEditingProfile ? t('Cancelar') : t('Editar Datos')}
                 </button>
               </div>
             </div>
@@ -136,7 +138,7 @@ export const UserProfileModal: React.FC = () => {
           {isEditingProfile && (
             <form onSubmit={handleUpdateProfile} className="bg-stone-50 p-4 rounded-xl border border-stone-200 text-xs space-y-3">
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Nombre Completo:</label>
+                <label className="block font-semibold text-stone-700 mb-1">{t('Nombre Completo:')}</label>
                 <input
                   type="text"
                   value={name}
@@ -146,7 +148,7 @@ export const UserProfileModal: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Teléfono Móvil:</label>
+                <label className="block font-semibold text-stone-700 mb-1">{t('Teléfono Móvil:')}</label>
                 <input
                   type="text"
                   value={phone}
@@ -159,7 +161,7 @@ export const UserProfileModal: React.FC = () => {
                 type="submit"
                 className="px-4 py-2 bg-stone-900 text-white rounded-lg font-semibold hover:bg-stone-800 transition"
               >
-                Guardar Cambios (PUT /api/users/{session.id})
+                {t('Guardar Cambios (PUT /api/users/{id})', { id: session.id })}
               </button>
             </form>
           )}
@@ -169,14 +171,14 @@ export const UserProfileModal: React.FC = () => {
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-emerald-600" />
-                <span>Libreta de Direcciones (Users Service)</span>
+                <span>{t('Libreta de Direcciones (Users Service)')}</span>
               </h4>
               <button
                 onClick={() => setIsAddingAddress(!isAddingAddress)}
                 className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>{isAddingAddress ? 'Cerrar Formulario' : 'Agregar Dirección'}</span>
+                <span>{isAddingAddress ? t('Cerrar Formulario') : t('Agregar Dirección')}</span>
               </button>
             </div>
 
@@ -184,10 +186,10 @@ export const UserProfileModal: React.FC = () => {
               <form onSubmit={handleAddAddress} className="mb-4 bg-stone-50 p-4 rounded-xl border border-stone-200 text-xs space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Etiqueta:</label>
+                    <label className="block font-semibold text-stone-700 mb-1">{t('Etiqueta:')}</label>
                     <input
                       type="text"
-                      placeholder="Ej: Apartamento Playa"
+                      placeholder={t('Ej: Apartamento Playa')}
                       value={newAddr.label}
                       onChange={(e) => setNewAddr({ ...newAddr, label: e.target.value })}
                       className="w-full bg-white border border-stone-300 rounded-lg p-2"
@@ -195,10 +197,10 @@ export const UserProfileModal: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Ciudad:</label>
+                    <label className="block font-semibold text-stone-700 mb-1">{t('Ciudad:')}</label>
                     <input
                       type="text"
-                      placeholder="Valencia"
+                      placeholder={t('Valencia')}
                       value={newAddr.city}
                       onChange={(e) => setNewAddr({ ...newAddr, city: e.target.value })}
                       className="w-full bg-white border border-stone-300 rounded-lg p-2"
@@ -207,10 +209,10 @@ export const UserProfileModal: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Dirección / Calle:</label>
+                    <label className="block font-semibold text-stone-700 mb-1">{t('Dirección / Calle:')}</label>
                   <input
                     type="text"
-                    placeholder="Calle Marina 45, Puerta 2"
+                    placeholder={t('Calle Marina 45, Puerta 2')}
                     value={newAddr.street}
                     onChange={(e) => setNewAddr({ ...newAddr, street: e.target.value })}
                     className="w-full bg-white border border-stone-300 rounded-lg p-2"
@@ -219,7 +221,7 @@ export const UserProfileModal: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Código Postal:</label>
+                    <label className="block font-semibold text-stone-700 mb-1">{t('Código Postal:')}</label>
                     <input
                       type="text"
                       placeholder="46001"
@@ -229,7 +231,7 @@ export const UserProfileModal: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">País:</label>
+                    <label className="block font-semibold text-stone-700 mb-1">{t('País:')}</label>
                     <input
                       type="text"
                       value={newAddr.country}
@@ -242,7 +244,7 @@ export const UserProfileModal: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-semibold transition"
                 >
-                  Guardar Dirección (POST /api/users/addresses)
+                  {t('Guardar Dirección (POST /api/users/addresses)')}
                 </button>
               </form>
             )}
@@ -259,7 +261,7 @@ export const UserProfileModal: React.FC = () => {
                         <span className="font-bold text-stone-900">{addr.label}</span>
                         {addr.isDefault && (
                           <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.2 rounded">
-                            Principal
+                            {t('Principal')}
                           </span>
                         )}
                       </div>
@@ -270,7 +272,7 @@ export const UserProfileModal: React.FC = () => {
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-stone-400">No hay direcciones registradas.</p>
+                <p className="text-xs text-stone-400">{t('No hay direcciones registradas.')}</p>
               )}
             </div>
           </div>
@@ -280,7 +282,7 @@ export const UserProfileModal: React.FC = () => {
             <div className="flex items-center justify-between text-stone-400 text-[11px]">
               <span className="flex items-center gap-1 text-emerald-400 font-bold">
                 <Key className="w-3.5 h-3.5" />
-                Auth Service JWT Token:
+                {t('Auth Service JWT Token:')}
               </span>
               <span>Bearer 256-bit</span>
             </div>
@@ -291,19 +293,19 @@ export const UserProfileModal: React.FC = () => {
 
           {/* Quick Demo Role Switcher */}
           <div className="pt-2 border-t border-stone-200 flex items-center justify-between text-xs">
-            <span className="text-stone-500 font-medium">Alternar cuenta de prueba:</span>
+            <span className="text-stone-500 font-medium">{t('Alternar cuenta de prueba:')}</span>
             <div className="flex gap-2">
               <button
                 onClick={loginAsDemoUser}
                 className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-md font-semibold transition text-[11px]"
               >
-                Cliente (Camila)
+                {t('Cliente (Camila)')}
               </button>
               <button
                 onClick={loginAsDemoAdmin}
                 className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-md font-semibold transition text-[11px]"
               >
-                Admin (Plataforma)
+                {t('Admin (Plataforma)')}
               </button>
             </div>
           </div>

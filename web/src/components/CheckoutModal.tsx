@@ -17,8 +17,10 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { ordersService, paymentsService, productsService, usersService } from '../services';
 import { Order, PaymentMethodType, UserAddress } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 export const CheckoutModal: React.FC = () => {
+  const { t } = useLanguage();
   const { isCheckoutOpen, closeCheckout, items, subtotal, shippingFee, tax, total, clearCart, setLastCreatedOrder } = useCart();
   const { session, profile } = useAuth();
 
@@ -42,7 +44,7 @@ export const CheckoutModal: React.FC = () => {
   // Payment state
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('credit_card');
   const [cardNumber, setCardNumber] = useState('4242 •••• •••• 4242');
-  const [cardHolder, setCardHolder] = useState(session?.name || 'Titular');
+  const [cardHolder, setCardHolder] = useState(session?.name || t('Titular'));
   const [cardExpiry, setCardExpiry] = useState('12/28');
   const [cardCvv, setCardCvv] = useState('888');
 
@@ -89,7 +91,7 @@ export const CheckoutModal: React.FC = () => {
   const handleProceedToPayment = () => {
     const addr = getEffectiveAddress();
     if (!addr.street || !addr.city) {
-      setErrorMessage('Por favor ingresa la calle y ciudad de entrega.');
+      setErrorMessage(t('Por favor ingresa la calle y ciudad de entrega.'));
       return;
     }
     setErrorMessage(null);
@@ -163,7 +165,7 @@ export const CheckoutModal: React.FC = () => {
       setStep(4);
     } catch (err: any) {
       console.error('Checkout failure in modular services:', err);
-      setErrorMessage(err.message || 'Ocurrió un error al procesar la orden en los servicios.');
+      setErrorMessage(err.message || t('Ocurrió un error al procesar la orden en los servicios.'));
       setStep(2);
     } finally {
       setIsProcessing(false);
@@ -177,7 +179,7 @@ export const CheckoutModal: React.FC = () => {
         <div className="p-5 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-emerald-600" />
-            <h2 className="text-base font-bold text-stone-900">Checkout Seguro Monolito</h2>
+            <h2 className="text-base font-bold text-stone-900">{t('Checkout Seguro Monolito')}</h2>
           </div>
           {step !== 3 && (
             <button
@@ -199,7 +201,7 @@ export const CheckoutModal: React.FC = () => {
             <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[11px] font-bold">
               1
             </span>
-            <span>Envío (Users)</span>
+            <span>{t('Envío (Users)')}</span>
           </div>
           <div className="h-0.5 w-8 bg-stone-200" />
           <div
@@ -210,7 +212,7 @@ export const CheckoutModal: React.FC = () => {
             <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[11px] font-bold">
               2
             </span>
-            <span>Pago (Payments)</span>
+            <span>{t('Pago (Payments)')}</span>
           </div>
           <div className="h-0.5 w-8 bg-stone-200" />
           <div
@@ -221,7 +223,7 @@ export const CheckoutModal: React.FC = () => {
             <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[11px] font-bold">
               3
             </span>
-            <span>Confirmación (Orders)</span>
+            <span>{t('Confirmación (Orders)')}</span>
           </div>
         </div>
 
@@ -239,14 +241,14 @@ export const CheckoutModal: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-emerald-600" />
-                  <span>Dirección de Entrega (Users Service)</span>
+                  <span>{t('Dirección de Entrega (Users Service)')}</span>
                 </h3>
                 {addresses.length > 0 && (
                   <button
                     onClick={() => setIsUsingCustomAddress(!isUsingCustomAddress)}
                     className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold"
                   >
-                    {isUsingCustomAddress ? 'Usar dirección guardada' : '+ Nueva dirección'}
+                    {isUsingCustomAddress ? t('Usar dirección guardada') : t('+ Nueva dirección')}
                   </button>
                 )}
               </div>
@@ -267,7 +269,7 @@ export const CheckoutModal: React.FC = () => {
                         <span className="text-xs font-bold text-stone-900">{addr.label}</span>
                         {addr.isDefault && (
                           <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded font-medium">
-                            Predeterminada
+                            {t('Predeterminada')}
                           </span>
                         )}
                       </div>
@@ -282,38 +284,38 @@ export const CheckoutModal: React.FC = () => {
               ) : (
                 <div className="space-y-3 bg-stone-50 p-4 rounded-xl border border-stone-200 text-xs">
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Nombre o Etiqueta:</label>
+                    <label className="block font-semibold text-stone-700 mb-1">{t('Nombre o Etiqueta:')}</label>
                     <input
                       type="text"
-                      value={customAddress.label}
+                      value={customAddress.label === 'Nueva Dirección' ? t(customAddress.label) : customAddress.label}
                       onChange={(e) => setCustomAddress({ ...customAddress, label: e.target.value })}
-                      placeholder="Ej: Casa, Oficina, Departamento"
+                      placeholder={t('Ej: Casa, Oficina, Departamento')}
                       className="w-full bg-white border border-stone-300 rounded-lg p-2 text-stone-900"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Calle y Número:</label>
+                    <label className="block font-semibold text-stone-700 mb-1">{t('Calle y Número:')}</label>
                     <input
                       type="text"
                       value={customAddress.street}
                       onChange={(e) => setCustomAddress({ ...customAddress, street: e.target.value })}
-                      placeholder="Av. Paseo 1234, Depto 4"
+                      placeholder={t('Av. Paseo 1234, Depto 4')}
                       className="w-full bg-white border border-stone-300 rounded-lg p-2 text-stone-900"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block font-semibold text-stone-700 mb-1">Ciudad:</label>
+                      <label className="block font-semibold text-stone-700 mb-1">{t('Ciudad:')}</label>
                       <input
                         type="text"
                         value={customAddress.city}
                         onChange={(e) => setCustomAddress({ ...customAddress, city: e.target.value })}
-                        placeholder="Madrid"
+                        placeholder={t('Madrid')}
                         className="w-full bg-white border border-stone-300 rounded-lg p-2 text-stone-900"
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold text-stone-700 mb-1">Código Postal:</label>
+                      <label className="block font-semibold text-stone-700 mb-1">{t('Código Postal:')}</label>
                       <input
                         type="text"
                         value={customAddress.postalCode}
@@ -329,11 +331,11 @@ export const CheckoutModal: React.FC = () => {
               {/* Order Summary Mini Box */}
               <div className="bg-stone-50 rounded-xl p-3.5 border border-stone-200 mt-4 text-xs space-y-1">
                 <div className="flex justify-between text-stone-600">
-                  <span>Artículos en la orden:</span>
-                  <span className="font-semibold text-stone-900">{items.length} productos</span>
+                  <span>{t('Artículos en la orden:')}</span>
+                  <span className="font-semibold text-stone-900">{items.length} {t('productos')}</span>
                 </div>
                 <div className="flex justify-between text-stone-600">
-                  <span>Total estimado con envío e IVA:</span>
+                  <span>{t('Total estimado con envío e IVA:')}</span>
                   <span className="font-bold text-emerald-800 text-sm">${total.toFixed(2)}</span>
                 </div>
               </div>
@@ -343,7 +345,7 @@ export const CheckoutModal: React.FC = () => {
                   onClick={handleProceedToPayment}
                   className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition"
                 >
-                  <span>Continuar a Pago</span>
+                  <span>{t('Continuar a Pago')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -356,7 +358,7 @@ export const CheckoutModal: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-emerald-600" />
-                  <span>Método de Pago (Payments Service)</span>
+                  <span>{t('Método de Pago (Payments Service)')}</span>
                 </h3>
                 <span className="text-xs font-mono text-stone-400">SSL 256-Bit Encrypted</span>
               </div>
@@ -373,7 +375,7 @@ export const CheckoutModal: React.FC = () => {
                   }`}
                 >
                   <CreditCard className="w-4 h-4 text-emerald-600" />
-                  <span>Tarjeta Crédito</span>
+                  <span>{t('Tarjeta Crédito')}</span>
                 </button>
 
                 <button
@@ -399,7 +401,7 @@ export const CheckoutModal: React.FC = () => {
                   }`}
                 >
                   <Building2 className="w-4 h-4 text-stone-700" />
-                  <span>Transferencia</span>
+                  <span>{t('Transferencia')}</span>
                 </button>
               </div>
 
@@ -407,7 +409,7 @@ export const CheckoutModal: React.FC = () => {
               {paymentMethod === 'credit_card' && (
                 <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 space-y-3 text-xs">
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Número de Tarjeta:</label>
+                    <label className="block font-semibold text-stone-700 mb-1">{t('Número de Tarjeta:')}</label>
                     <input
                       type="text"
                       value={cardNumber}
@@ -419,7 +421,7 @@ export const CheckoutModal: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-semibold text-stone-700 mb-1">Titular:</label>
+                      <label className="block font-semibold text-stone-700 mb-1">{t('Titular:')}</label>
                       <input
                         type="text"
                         value={cardHolder}
@@ -429,12 +431,12 @@ export const CheckoutModal: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block font-semibold text-stone-700 mb-1">Vence:</label>
+                        <label className="block font-semibold text-stone-700 mb-1">{t('Vence:')}</label>
                         <input
                           type="text"
                           value={cardExpiry}
                           onChange={(e) => setCardExpiry(e.target.value)}
-                          placeholder="MM/AA"
+                          placeholder="MM/YY"
                           className="w-full bg-white border border-stone-300 rounded-lg p-2 text-stone-900 font-mono"
                         />
                       </div>
@@ -456,18 +458,18 @@ export const CheckoutModal: React.FC = () => {
 
               {paymentMethod === 'paypal' && (
                 <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-200 text-xs text-blue-900 space-y-1">
-                  <p className="font-semibold">Conexión con cuenta PayPal:</p>
+                  <p className="font-semibold">{t('Conexión con cuenta PayPal:')}</p>
                   <p className="text-stone-600">
-                    Se autorizará un débito instantáneo de <strong>${total.toFixed(2)} USD</strong> mediante el token de sesión de Payments Service.
+                    {t('Se autorizará un débito instantáneo de')} <strong>${total.toFixed(2)} USD</strong> {t('mediante el token de sesión de Payments Service.')}
                   </p>
                 </div>
               )}
 
               {paymentMethod === 'bank_transfer' && (
                 <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 text-xs text-stone-700 space-y-1">
-                  <p className="font-semibold text-stone-900">Transferencia Instantánea SEPA / Red Bancaria:</p>
+                  <p className="font-semibold text-stone-900">{t('Transferencia Instantánea SEPA / Red Bancaria:')}</p>
                   <p className="text-stone-600">
-                    El servicio de pagos emitirá una confirmación digital inmediata con código de autorización bancario.
+                    {t('El servicio de pagos emitirá una confirmación digital inmediata con código de autorización bancario.')}
                   </p>
                 </div>
               )}
@@ -475,19 +477,19 @@ export const CheckoutModal: React.FC = () => {
               {/* Price Breakdown */}
               <div className="border-t border-stone-200 pt-3 space-y-1 text-xs">
                 <div className="flex justify-between text-stone-600">
-                  <span>Subtotal productos:</span>
+                  <span>{t('Subtotal productos:')}</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-stone-600">
-                  <span>Coste de envío:</span>
-                  <span>{shippingFee === 0 ? 'Gratis' : `$${shippingFee.toFixed(2)}`}</span>
+                  <span>{t('Coste de envío:')}</span>
+                  <span>{shippingFee === 0 ? t('Gratis') : `$${shippingFee.toFixed(2)}`}</span>
                 </div>
                 <div className="flex justify-between text-stone-600">
-                  <span>Impuestos (21% IVA):</span>
+                  <span>{t('Impuestos (21% IVA):')}</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-extrabold text-stone-900 pt-2 border-t border-stone-100">
-                  <span>Total a Cobrar:</span>
+                  <span>{t('Total a Cobrar:')}</span>
                   <span className="text-base text-emerald-800">${total.toFixed(2)}</span>
                 </div>
               </div>
@@ -500,7 +502,7 @@ export const CheckoutModal: React.FC = () => {
                   className="px-4 py-2 border border-stone-200 text-stone-700 rounded-xl text-xs font-semibold hover:bg-stone-50 flex items-center gap-1.5 transition"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Volver a Envío</span>
+                  <span>{t('Volver a Envío')}</span>
                 </button>
 
                 <button
@@ -509,7 +511,7 @@ export const CheckoutModal: React.FC = () => {
                   className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-md cursor-pointer"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Autorizar y Pagar ${total.toFixed(2)}</span>
+                  <span>{t('Autorizar y Pagar ${amount}', { amount: total.toFixed(2) })}</span>
                 </button>
               </div>
             </div>
@@ -525,13 +527,13 @@ export const CheckoutModal: React.FC = () => {
                 </div>
               </div>
               <h3 className="text-base font-bold text-stone-900">
-                Coordinando Monolito Modular...
+                {t('Coordinando Monolito Modular...')}
               </h3>
               <div className="space-y-1 text-xs text-stone-500 font-mono max-w-xs mx-auto">
-                <p>1. Users Service: validando cuenta...</p>
-                <p>2. Orders Service: instanciando orden...</p>
-                <p>3. Payments Service: procesando cargo...</p>
-                <p>4. Products Service: reservando inventario...</p>
+                <p>{t('1. Users Service: validando cuenta...')}</p>
+                <p>{t('2. Orders Service: instanciando orden...')}</p>
+                <p>{t('3. Payments Service: procesando cargo...')}</p>
+                <p>{t('4. Products Service: reservando inventario...')}</p>
               </div>
             </div>
           )}
@@ -544,10 +546,10 @@ export const CheckoutModal: React.FC = () => {
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
                 <h3 className="text-lg font-black text-stone-900">
-                  ¡Orden Confirmada con Éxito!
+                  {t('¡Orden Confirmada con Éxito!')}
                 </h3>
                 <p className="text-xs text-stone-500 mt-0.5">
-                  Procesada por los 5 servicios del Monolito Modular
+                  {t('Procesada por los 5 servicios del Monolito Modular')}
                 </p>
               </div>
 
@@ -555,27 +557,27 @@ export const CheckoutModal: React.FC = () => {
               <div className="bg-stone-50 rounded-xl p-4 border border-stone-200 text-xs space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-stone-200">
                   <div>
-                    <span className="text-stone-400 font-medium">Nº de Orden:</span>
+                    <span className="text-stone-400 font-medium">{t('Nº de Orden:')}</span>
                     <strong className="font-mono text-stone-900 ml-1.5">{createdOrder.id}</strong>
                   </div>
                   <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[11px] uppercase tracking-wide">
-                    Estado: {createdOrder.status}
+                    {t('Estado: {status}', { status: createdOrder.status })}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-stone-600">
                   <div>
-                    <span className="block text-stone-400 text-[11px]">Código de Autorización:</span>
+                    <span className="block text-stone-400 text-[11px]">{t('Código de Autorización:')}</span>
                     <span className="font-mono font-semibold text-stone-800">{paymentAuthCode}</span>
                   </div>
                   <div>
-                    <span className="block text-stone-400 text-[11px]">Método de Pago:</span>
-                    <span className="font-semibold text-stone-800">{createdOrder.paymentMethod}</span>
+                    <span className="block text-stone-400 text-[11px]">{t('Método de Pago:')}</span>
+                    <span className="font-semibold text-stone-800">{t(createdOrder.paymentMethod)}</span>
                   </div>
                 </div>
 
                 <div>
-                  <span className="block text-stone-400 text-[11px]">Dirección de Envío:</span>
+                  <span className="block text-stone-400 text-[11px]">{t('Dirección de Envío:')}</span>
                   <span className="font-medium text-stone-800">
                     {createdOrder.shippingAddress.street}, {createdOrder.shippingAddress.city}
                   </span>
@@ -583,7 +585,7 @@ export const CheckoutModal: React.FC = () => {
 
                 {/* Items preview */}
                 <div className="pt-2 border-t border-stone-200">
-                  <span className="block text-stone-400 text-[11px] mb-1">Productos adquiridos:</span>
+                  <span className="block text-stone-400 text-[11px] mb-1">{t('Productos adquiridos:')}</span>
                   <div className="space-y-1">
                     {createdOrder.items.map((it) => (
                       <div key={it.productId} className="flex justify-between items-center text-stone-700">
@@ -599,7 +601,7 @@ export const CheckoutModal: React.FC = () => {
                 </div>
 
                 <div className="pt-2 border-t border-stone-200 flex justify-between font-bold text-stone-900 text-sm">
-                  <span>Monto Total Cobrado:</span>
+                  <span>{t('Monto Total Cobrado:')}</span>
                   <span className="text-emerald-800">${createdOrder.total.toFixed(2)}</span>
                 </div>
               </div>
@@ -611,7 +613,7 @@ export const CheckoutModal: React.FC = () => {
                   onClick={closeCheckout}
                   className="px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition shadow-sm"
                 >
-                  Regresar a la Tienda
+                  {t('Regresar a la Tienda')}
                 </button>
               </div>
             </div>

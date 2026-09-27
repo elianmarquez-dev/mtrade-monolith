@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { X, Lock, Mail, User, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export const AuthModal: React.FC = () => {
+  const { t } = useLanguage();
   const {
     isAuthModalOpen,
     closeAuthModal,
@@ -29,19 +31,19 @@ export const AuthModal: React.FC = () => {
     try {
       if (authModalMode === 'login') {
         if (!email) {
-          setError('Ingresa un correo electrónico.');
+          setError(t('Ingresa un correo electrónico.'));
           return;
         }
         await login({ email, password });
       } else {
         if (!email || !password) {
-          setError('Completa tu correo y contraseña.');
+          setError(t('Completa tu correo y contraseña.'));
           return;
         }
         await register({ email, password, firstName, lastName });
       }
     } catch (err: any) {
-      setError(err.message || 'Error en Auth Service');
+      setError(err.message || t('Error en Auth Service'));
     }
   };
 
@@ -53,7 +55,7 @@ export const AuthModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-emerald-600" />
             <h2 className="text-base font-bold text-stone-900">
-              {authModalMode === 'login' ? 'Iniciar Sesión (Auth Service)' : 'Crear Cuenta (Auth Service)'}
+              {authModalMode === 'login' ? t('Iniciar Sesión (Auth Service)') : t('Crear Cuenta (Auth Service)')}
             </h2>
           </div>
           <button
@@ -75,7 +77,7 @@ export const AuthModal: React.FC = () => {
                 : 'text-stone-500 hover:text-stone-800'
             }`}
           >
-            Ingresar
+            {t('Ingresar')}
           </button>
           <button
             type="button"
@@ -86,7 +88,7 @@ export const AuthModal: React.FC = () => {
                 : 'text-stone-500 hover:text-stone-800'
             }`}
           >
-            Registrarse
+            {t('Registrarse')}
           </button>
         </div>
 
@@ -101,7 +103,7 @@ export const AuthModal: React.FC = () => {
             {authModalMode === 'register' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Nombre:</label>
+                  <label className="block font-semibold text-stone-700 mb-1">{t('Nombre:')}</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -114,7 +116,7 @@ export const AuthModal: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Apellido:</label>
+                  <label className="block font-semibold text-stone-700 mb-1">{t('Apellido:')}</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -130,13 +132,13 @@ export const AuthModal: React.FC = () => {
             )}
 
             <div>
-              <label className="block font-semibold text-stone-700 mb-1">Correo Electrónico:</label>
+              <label className="block font-semibold text-stone-700 mb-1">{t('Correo Electrónico:')}</label>
               <div className="relative">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@correo.com"
+                  placeholder={t('tu@correo.com')}
                   className="w-full bg-stone-50 border border-stone-300 rounded-lg pl-9 pr-3 py-2 text-stone-900 focus:bg-white focus:outline-none"
                   required
                 />
@@ -145,7 +147,7 @@ export const AuthModal: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-semibold text-stone-700 mb-1">Contraseña:</label>
+              <label className="block font-semibold text-stone-700 mb-1">{t('Contraseña:')}</label>
               <div className="relative">
                 <input
                   type="password"
@@ -165,7 +167,7 @@ export const AuthModal: React.FC = () => {
               className="w-full py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition mt-2 cursor-pointer"
             >
               <span>
-                {authModalMode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
+                {authModalMode === 'login' ? t('Iniciar Sesión') : t('Crear Cuenta')}
               </span>
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -174,7 +176,7 @@ export const AuthModal: React.FC = () => {
           {/* Quick Demo Logins */}
           <div className="mt-5 pt-4 border-t border-stone-200 text-xs">
             <span className="block text-stone-500 font-semibold text-[11px] mb-2 text-center">
-              ACCESO RÁPIDO CON CUENTAS DEMO:
+              {t('ACCESO RÁPIDO CON CUENTAS DEMO:')}
             </span>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -183,7 +185,7 @@ export const AuthModal: React.FC = () => {
                 className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-left transition"
               >
                 <span className="block font-bold text-stone-900">Camila R.</span>
-                <span className="text-[10px] text-stone-500">Rol: Cliente</span>
+                <span className="text-[10px] text-stone-500">{t('Rol: Cliente')}</span>
               </button>
               <button
                 type="button"
@@ -191,7 +193,7 @@ export const AuthModal: React.FC = () => {
                 className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-left transition"
               >
                 <span className="block font-bold text-stone-900">Admin</span>
-                <span className="text-[10px] text-stone-500">Rol: Administrador</span>
+                <span className="text-[10px] text-stone-500">{t('Rol: Administrador')}</span>
               </button>
             </div>
           </div>

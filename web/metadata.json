@@ -1,6 +1,6 @@
 {
-  "name": "Modular E-Commerce",
-  "description": "Plataforma de comercio electrónico con interfaz React y Tailwind CSS integrada con arquitectura de monolito modular (auth, orders, payments, products, users).",
+  "name": "MTrade App",
+  "description": "MTrade App is a modular e-commerce platform built with React and Tailwind CSS.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

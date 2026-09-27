@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { ordersService } from '../services';
 import { Order, OrderStatus } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 export const OrdersModal: React.FC = () => {
+  const { language, t } = useLanguage();
   const { isOrdersModalOpen, closeOrdersModal } = useCart();
   const { session } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -40,31 +42,31 @@ export const OrdersModal: React.FC = () => {
       case 'paid':
         return (
           <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Pagado
+            <CheckCircle2 className="w-3 h-3" /> {t('Pagado')}
           </span>
         );
       case 'shipped':
         return (
           <span className="bg-blue-100 text-blue-800 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Truck className="w-3 h-3" /> En Camino
+            <Truck className="w-3 h-3" /> {t('En Camino')}
           </span>
         );
       case 'delivered':
         return (
           <span className="bg-purple-100 text-purple-800 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Entregado
+            <CheckCircle2 className="w-3 h-3" /> {t('Entregado')}
           </span>
         );
       case 'processing':
         return (
           <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Clock className="w-3 h-3" /> Procesando
+            <Clock className="w-3 h-3" /> {t('Procesando')}
           </span>
         );
       default:
         return (
           <span className="bg-stone-100 text-stone-700 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Clock className="w-3 h-3" /> Pendiente
+            <Clock className="w-3 h-3" /> {t('Pendiente')}
           </span>
         );
     }
@@ -77,7 +79,7 @@ export const OrdersModal: React.FC = () => {
         <div className="p-5 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-stone-900" />
-            <h2 className="text-base font-bold text-stone-900">Historial de Pedidos (Orders Service)</h2>
+            <h2 className="text-base font-bold text-stone-900">{t('Historial de Pedidos (Orders Service)')}</h2>
             <span className="text-xs bg-stone-200 text-stone-700 px-2 py-0.5 rounded-full font-semibold">
               {orders.length}
             </span>
@@ -86,7 +88,7 @@ export const OrdersModal: React.FC = () => {
             <button
               onClick={fetchOrders}
               className="p-1.5 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition"
-              title="Recargar órdenes"
+              title={t('Recargar órdenes')}
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
@@ -103,14 +105,14 @@ export const OrdersModal: React.FC = () => {
         <div className="p-6">
           {isLoading ? (
             <div className="py-16 text-center text-xs text-stone-500">
-              Cargando pedidos desde Orders Service...
+              {t('Cargando pedidos desde Orders Service...')}
             </div>
           ) : orders.length === 0 ? (
             <div className="py-12 text-center">
               <Package className="w-12 h-12 text-stone-300 mx-auto mb-3" />
-              <h3 className="text-sm font-bold text-stone-800">No tienes pedidos registrados</h3>
+              <h3 className="text-sm font-bold text-stone-800">{t('No tienes pedidos registrados')}</h3>
               <p className="text-xs text-stone-500 mt-1 max-w-xs mx-auto">
-                Realiza una compra para ver el seguimiento en tiempo real entre Orders y Payments.
+                {t('Realiza una compra para ver el seguimiento en tiempo real entre Orders y Payments.')}
               </p>
             </div>
           ) : (
@@ -137,7 +139,7 @@ export const OrdersModal: React.FC = () => {
                       </div>
 
                       <div className="text-[11px] text-stone-500 mb-2">
-                        {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                        {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-US' : 'es-ES', {
                           day: '2-digit',
                           month: 'short',
                           year: 'numeric',
@@ -148,7 +150,7 @@ export const OrdersModal: React.FC = () => {
 
                       <div className="flex items-center justify-between text-xs pt-2 border-t border-stone-100">
                         <span className="text-stone-600 font-medium">
-                          {order.items.reduce((s, i) => s + i.quantity, 0)} artículos
+                          {order.items.reduce((s, i) => s + i.quantity, 0)} {t('artículos')}
                         </span>
                         <span className="font-bold text-stone-900">
                           ${order.total.toFixed(2)}
@@ -166,7 +168,7 @@ export const OrdersModal: React.FC = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between pb-3 border-b border-stone-200">
                       <div>
-                        <span className="text-stone-400">Detalles de Orden</span>
+                        <span className="text-stone-400">{t('Detalles de Orden')}</span>
                         <h4 className="font-mono text-sm font-black text-stone-900">
                           {selectedOrder.id}
                         </h4>
@@ -177,21 +179,21 @@ export const OrdersModal: React.FC = () => {
                     {/* Timeline */}
                     <div className="bg-white p-3.5 rounded-xl border border-stone-200">
                       <span className="block font-semibold text-stone-700 mb-2">
-                        Estado del Envío y Entrega:
+                        {t('Estado del Envío y Entrega:')}
                       </span>
                       <div className="flex items-center justify-between text-[10px] font-semibold text-stone-600">
-                        <span className="text-emerald-700">✓ Recibido</span>
-                        <span className="text-emerald-700">✓ Pagado</span>
+                        <span className="text-emerald-700">{t('✓ Recibido')}</span>
+                        <span className="text-emerald-700">{t('✓ Pagado')}</span>
                         <span className={selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered' ? 'text-emerald-700' : 'text-stone-400'}>
-                          ● En Tránsito
+                          {t('● En Tránsito')}
                         </span>
                         <span className={selectedOrder.status === 'delivered' ? 'text-emerald-700' : 'text-stone-400'}>
-                          ● Entregado
+                          {t('● Entregado')}
                         </span>
                       </div>
                       {selectedOrder.trackingNumber && (
                         <div className="mt-2.5 pt-2 border-t border-stone-100 text-[11px] flex items-center justify-between">
-                          <span className="text-stone-500">Nº de Seguimiento:</span>
+                          <span className="text-stone-500">{t('Nº de Seguimiento:')}</span>
                           <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
                             {selectedOrder.trackingNumber}
                           </span>
@@ -202,7 +204,7 @@ export const OrdersModal: React.FC = () => {
                     {/* Items List */}
                     <div>
                       <span className="block font-semibold text-stone-700 mb-1.5">
-                        Artículos del Pedido:
+                        {t('Artículos del Pedido:')}
                       </span>
                       <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                         {selectedOrder.items.map((item) => (
@@ -237,7 +239,7 @@ export const OrdersModal: React.FC = () => {
                     {/* Delivery address & Payment info */}
                     <div className="grid grid-cols-2 gap-3 pt-2 border-t border-stone-200">
                       <div>
-                        <span className="text-stone-400 block mb-0.5">Destino:</span>
+                        <span className="text-stone-400 block mb-0.5">{t('Destino:')}</span>
                         <p className="font-medium text-stone-800">
                           {selectedOrder.shippingAddress.street}
                           <br />
@@ -245,9 +247,9 @@ export const OrdersModal: React.FC = () => {
                         </p>
                       </div>
                       <div>
-                        <span className="text-stone-400 block mb-0.5">Pago:</span>
+                        <span className="text-stone-400 block mb-0.5">{t('Pago:')}</span>
                         <p className="font-medium text-stone-800">
-                          {selectedOrder.paymentMethod || 'Tarjeta Verificada'}
+                          {selectedOrder.paymentMethod || t('Tarjeta Verificada')}
                         </p>
                         {selectedOrder.paymentId && (
                           <span className="font-mono text-[10px] text-stone-500">
@@ -259,13 +261,13 @@ export const OrdersModal: React.FC = () => {
 
                     {/* Total */}
                     <div className="pt-2 border-t border-stone-200 flex justify-between items-center text-sm font-bold text-stone-900">
-                      <span>Total Pagado:</span>
+                      <span>{t('Total Pagado:')}</span>
                       <span className="text-base text-emerald-800">${selectedOrder.total.toFixed(2)}</span>
                     </div>
                   </div>
                 ) : (
                   <div className="h-full flex items-center justify-center text-xs text-stone-400">
-                    Selecciona una orden de la lista
+                    {t('Selecciona una orden de la lista')}
                   </div>
                 )}
               </div>

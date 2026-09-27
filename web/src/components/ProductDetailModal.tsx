@@ -3,6 +3,7 @@ import { X, Star, ShoppingBag, Truck, ShieldCheck, ArrowRight, Check } from 'luc
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -12,6 +13,7 @@ interface ProductDetailModalProps {
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClose }) => {
   const { addItem, openCheckout } = useCart();
   const { session, openAuthModal } = useAuth();
+  const { t } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const [addedSuccess, setAddedSuccess] = useState(false);
 
@@ -63,7 +65,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
             />
             {product.compareAtPrice && (
               <span className="absolute top-4 left-4 bg-rose-600 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow">
-                OFERTA
+                {t('OFERTA')}
               </span>
             )}
           </div>
@@ -97,7 +99,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                   ))}
                 </div>
                 <span className="text-sm font-bold text-stone-800">{product.rating}</span>
-                <span className="text-xs text-stone-400">({product.reviewsCount} opiniones verificadas)</span>
+                <span className="text-xs text-stone-400">{t('({count} opiniones verificadas)', { count: product.reviewsCount })}</span>
               </div>
 
               {/* Price */}
@@ -111,7 +113,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                   </span>
                 )}
                 <span className="text-xs text-stone-500 font-medium ml-auto">
-                  Stock disponible: <strong className="text-stone-800">{product.stock}</strong> unids.
+                  {t('Stock disponible:')} <strong className="text-stone-800">{product.stock}</strong> {t('unids.')}
                 </span>
               </div>
 
@@ -136,11 +138,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
               <div className="mt-5 pt-4 border-t border-stone-100 grid grid-cols-2 gap-2 text-xs text-stone-600">
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-emerald-600" />
-                  <span>Envío seguro y express</span>
+                  <span>{t('Envío seguro y express')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Garantía de 12 meses</span>
+                  <span>{t('Garantía de 12 meses')}</span>
                 </div>
               </div>
             </div>
@@ -148,7 +150,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
             {/* Actions */}
             <div className="mt-6 pt-4 border-t border-stone-100">
               <div className="flex items-center gap-4 mb-3">
-                <span className="text-xs font-semibold text-stone-700">Cantidad:</span>
+                <span className="text-xs font-semibold text-stone-700">{t('Cantidad:')}</span>
                 <div className="flex items-center border border-stone-300 rounded-lg overflow-hidden">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -185,12 +187,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                   {addedSuccess ? (
                     <>
                       <Check className="w-4 h-4" />
-                      <span>Agregado al Carrito</span>
+                      <span>{t('Agregado al Carrito')}</span>
                     </>
                   ) : (
                     <>
                       <ShoppingBag className="w-4 h-4" />
-                      <span>Añadir al Carrito</span>
+                      <span>{t('Añadir al Carrito')}</span>
                     </>
                   )}
                 </button>
@@ -200,7 +202,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                   disabled={isOutOfStock}
                   className="py-2.5 px-4 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition shadow-sm"
                 >
-                  <span>Comprar Ahora</span>
+                  <span>{t('Comprar Ahora')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
