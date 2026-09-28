@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { ProductsService } from './products.service';
@@ -10,7 +14,8 @@ describe('ProductsService', () => {
 
   beforeEach(async () => {
     const products = new Map<string, any>();
-    const prismaMock = {
+    const reviews = new Map<string, any>();
+    const prismaMock: any = {
       product: {
         create: jest.fn(async ({ data }) => {
           const now = new Date();
@@ -37,16 +42,23 @@ describe('ProductsService', () => {
         ),
         findFirst: jest.fn(async ({ where }: any) => {
           const product = products.get(where.id);
-          return product?.ownerId === where.ownerId ? product : null;
+          return product &&
+            (where.ownerId === undefined || product.ownerId === where.ownerId) &&
+            (where.status === undefined || product.status === where.status)
+            ? product
+            : null;
         }),
         update: jest.fn(async ({ where, data }: any) => {
           const product = products.get(where.id);
-          if (!product || product.ownerId !== where.ownerId) {
+          if (!product || (where.ownerId && product.ownerId !== where.ownerId)) {
             throw new NotFoundException('Product not found');
           }
           Object.assign(product, data);
           if (data.price !== undefined) {
             product.price = new Prisma.Decimal(data.price);
+          }
+          if (data.rating !== undefined) {
+            product.rating = new Prisma.Decimal(data.rating);
           }
           product.updatedAt = new Date();
           return product;
@@ -58,6 +70,40 @@ describe('ProductsService', () => {
           return { count: 1 };
         }),
       },
+      productReview: {
+        findMany: jest.fn(async ({ where }: any) =>
+          [...reviews.values()].filter((review) => review.productId === where.productId),
+        ),
+        upsert: jest.fn(async ({ where, create, update }: any) => {
+          const key = `${where.productId_userId.productId}:${where.productId_userId.userId}`;
+          const review = reviews.get(key) ?? {
+            id: randomUUID(),
+            ...create,
+            createdAt: new Date(),
+            user: { firstName: 'Test', lastName: 'Customer' },
+          };
+          Object.assign(review, update);
+          reviews.set(key, review);
+          return review;
+        }),
+        aggregate: jest.fn(async ({ where }: any) => {
+          const matchingReviews = [...reviews.values()].filter(
+            (review) => review.productId === where.productId,
+          );
+          return {
+            _avg: {
+              rating: matchingReviews.length
+                ? matchingReviews.reduce((sum, review) => sum + review.rating, 0) /
+                  matchingReviews.length
+                : null,
+            },
+            _count: { _all: matchingReviews.length },
+          };
+        }),
+      },
+      $transaction: jest.fn((callback: (transaction: any) => Promise<any>) =>
+        callback(prismaMock),
+      ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -134,6 +180,47 @@ describe('ProductsService', () => {
     await expect(service.findOne(product.id, 'user-1')).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  it('should create and list product reviews and update the aggregate rating', async () => {
+    const product = await service.create({
+      ownerId: 'owner-1',
+      name: 'Reviewed product',
+      price: 25,
+      stock: 2,
+    });
+
+    const review = await service.createReview(product.id, 'customer-1', {
+      rating: 5,
+      comment: '  Excellent product  ',
+    });
+
+    expect(review).toMatchObject({
+      rating: 5,
+      comment: 'Excellent product',
+      authorName: 'Test Customer',
+    });
+    expect(await service.getReviews(product.id)).toEqual([review]);
+    await expect(service.findOnePublic(product.id)).resolves.toMatchObject({
+      rating: 5,
+      reviewsCount: 1,
+    });
+  });
+
+  it('should prevent owners from reviewing their own products', async () => {
+    const product = await service.create({
+      ownerId: 'owner-1',
+      name: 'Owned product',
+      price: 25,
+      stock: 2,
+    });
+
+    await expect(
+      service.createReview(product.id, 'owner-1', {
+        rating: 5,
+        comment: 'My own product',
+      }),
+    ).rejects.toThrow(ForbiddenException);
   });
 
   it('should reject requests without an owner id', async () => {

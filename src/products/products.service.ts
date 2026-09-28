@@ -1,10 +1,12 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
+import { CreateProductReviewDto } from './dto/create-product-review.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -124,6 +126,82 @@ export class ProductsService {
     }
 
     return this.serializeProduct(product);
+  }
+
+  async getReviews(productId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, status: 'ACTIVE' },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const reviews = await this.prisma.productReview.findMany({
+      where: { productId },
+      orderBy: { createdAt: 'desc' },
+      select: this.reviewSelect,
+    });
+
+    return reviews.map((review) => this.serializeReview(review));
+  }
+
+  async createReview(
+    productId: string,
+    userId: string,
+    createReviewDto: CreateProductReviewDto,
+  ) {
+    const normalizedUserId = this.requireOwnerId(userId);
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, status: 'ACTIVE' },
+      select: { id: true, ownerId: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.ownerId === normalizedUserId) {
+      throw new ForbiddenException('Product owners cannot review their own products');
+    }
+
+    const comment = createReviewDto.comment.trim();
+    if (!comment) {
+      throw new BadRequestException('Review comment is required');
+    }
+
+    const rating = this.validateReviewRating(createReviewDto.rating);
+    const review = await this.prisma.$transaction(async (transaction) => {
+      const savedReview = await transaction.productReview.upsert({
+        where: {
+          productId_userId: {
+            productId,
+            userId: normalizedUserId,
+          },
+        },
+        create: { productId, userId: normalizedUserId, rating, comment },
+        update: { rating, comment },
+        select: this.reviewSelect,
+      });
+      const aggregate = await transaction.productReview.aggregate({
+        where: { productId },
+        _avg: { rating: true },
+        _count: { _all: true },
+      });
+
+      await transaction.product.update({
+        where: { id: productId },
+        data: {
+          rating: aggregate._avg.rating,
+          reviewsCount: aggregate._count._all,
+        },
+      });
+
+      return savedReview;
+    });
+
+    return this.serializeReview(review);
   }
 
   async getCategories() {
@@ -251,6 +329,42 @@ export class ProductsService {
     updatedAt: true,
   } as const;
 
+  private readonly reviewSelect = {
+    id: true,
+    userId: true,
+    rating: true,
+    comment: true,
+    createdAt: true,
+    user: {
+      select: {
+        firstName: true,
+        lastName: true,
+      },
+    },
+  } as const;
+
+  private serializeReview(review: {
+    id: string;
+    userId: string;
+    rating: number;
+    comment: string;
+    createdAt: Date;
+    user: { firstName: string | null; lastName: string | null };
+  }) {
+    const authorName = [review.user.firstName, review.user.lastName]
+      .filter(Boolean)
+      .join(' ');
+
+    return {
+      id: review.id,
+      userId: review.userId,
+      rating: review.rating,
+      comment: review.comment,
+      authorName: authorName || 'Customer',
+      createdAt: review.createdAt.toISOString(),
+    };
+  }
+
   private serializeProduct(product: {
     id: string;
     ownerId: string;
@@ -325,6 +439,14 @@ export class ProductsService {
     }
 
     return Math.round(rating * 100) / 100;
+  }
+
+  private validateReviewRating(rating: number) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      throw new BadRequestException('Review rating is invalid');
+    }
+
+    return rating;
   }
 
   private handlePersistenceError(error: unknown): never {

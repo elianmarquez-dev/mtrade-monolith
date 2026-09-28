@@ -89,6 +89,11 @@ export const CheckoutModal: React.FC = () => {
   };
 
   const handleProceedToPayment = () => {
+    if (session && items.some((item) => item.product.ownerId === session.id)) {
+      setErrorMessage(t('Remove your own product from your cart to continue.'));
+      return;
+    }
+
     const addr = getEffectiveAddress();
     if (!addr.street || !addr.city) {
       setErrorMessage(t('Por favor ingresa la calle y ciudad de entrega.'));
@@ -99,6 +104,12 @@ export const CheckoutModal: React.FC = () => {
   };
 
   const handleExecuteCheckout = async () => {
+    if (session && items.some((item) => item.product.ownerId === session.id)) {
+      setErrorMessage(t('Remove your own product from your cart to continue.'));
+      setStep(1);
+      return;
+    }
+
     setIsProcessing(true);
     setErrorMessage(null);
     setStep(3);

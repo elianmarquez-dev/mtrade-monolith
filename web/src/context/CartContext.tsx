@@ -53,9 +53,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
+  useEffect(() => {
+    if (session) {
+      setItems((current) =>
+        current.filter((item) => item.product.ownerId !== session.id),
+      );
+    }
+  }, [session?.id]);
+
   const addItem = (product: Product, quantity: number = 1) => {
     if (!session) {
       openAuthModal('login');
+      return false;
+    }
+    if (product.ownerId === session.id) {
       return false;
     }
 

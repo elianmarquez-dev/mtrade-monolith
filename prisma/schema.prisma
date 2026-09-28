@@ -53,6 +53,7 @@ model User {
   updatedAt      DateTime        @updatedAt @map("updated_at")
   authCredential AuthCredential?
   products       Product[]
+  productReviews ProductReview[]
   orders         Order[]
   payments       Payment[]
   addresses      Address[]
@@ -99,12 +100,31 @@ model Product {
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  reviews ProductReview[]
 
   @@index([ownerId])
   @@index([status])
   @@index([ownerId, status])
   @@index([category])
   @@map("products")
+}
+
+model ProductReview {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  rating    Int
+  comment   String   @db.VarChar(2000)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId, createdAt])
+  @@index([userId])
+  @@map("product_reviews")
 }
 
 model Order {

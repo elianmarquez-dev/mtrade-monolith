@@ -1,4 +1,4 @@
-import { Product, ProductFilter } from '../types';
+import { Product, ProductFilter, ProductReview } from '../types';
 import { telemetry } from './telemetry';
 import { authFetch, normalizeProduct } from './apiClient';
 
@@ -76,6 +76,20 @@ export const productsService = {
     const product = await authFetch<any>(`/products/${id}`);
     telemetry.log({ service: 'products', method: 'GET', endpoint: `/api/products/${id}`, status: 200, durationMs: Math.round(performance.now() - startTime), responsePayload: { id: product.id, title: product.name, stock: product.stock } });
     return normalizeProduct(product);
+  },
+
+  async getProductReviews(id: string): Promise<ProductReview[]> {
+    return authFetch<ProductReview[]>(`/products/${id}/reviews`);
+  },
+
+  async createProductReview(
+    id: string,
+    payload: { rating: number; comment: string },
+  ): Promise<ProductReview> {
+    return authFetch<ProductReview>(`/products/${id}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 
   async getCategories(): Promise<string[]> {

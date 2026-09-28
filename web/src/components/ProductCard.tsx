@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Star, ShoppingBag, Eye, Check, AlertCircle } from 'lucide-react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
 interface ProductCardProps {
@@ -11,12 +12,13 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const { addItem } = useCart();
+  const { session } = useAuth();
   const { t } = useLanguage();
   const [justAdded, setJustAdded] = useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (product.stock <= 0) return;
+    if (product.stock <= 0 || isOwner) return;
     addItem(product, 1);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1400);
@@ -27,6 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
     : 0;
 
   const isOutOfStock = product.stock <= 0;
+  const isOwner = Boolean(session && product.ownerId === session.id);
   const isLowStock = product.stock > 0 && product.stock <= 8;
 
   return (
@@ -135,16 +138,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
 
           <button
             onClick={handleAddToCart}
-            disabled={isOutOfStock}
+            disabled={isOutOfStock || isOwner}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
-              isOutOfStock
+              isOutOfStock || isOwner
                 ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                 : justAdded
                 ? 'bg-emerald-600 text-white'
                 : 'bg-stone-900 hover:bg-stone-800 text-white'
             }`}
           >
-            {justAdded ? (
+            {isOwner ? (
+              <span>{t('Your listing')}</span>
+            ) : justAdded ? (
               <>
                 <Check className="w-3.5 h-3.5" />
                 <span>{t('Agregado')}</span>

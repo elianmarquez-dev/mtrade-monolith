@@ -17,6 +17,8 @@ export class OrdersService {
   async create(createOrderDto: CreateOrderDto & { userId: string }) {
     const userId = this.requireUserId(createOrderDto.userId);
     const items = this.validateItems(createOrderDto.items);
+    await this.ensureNoProductsOwnedByUser(userId, items);
+
     const totalAmount = this.resolveTotalAmount(
       createOrderDto.totalAmount,
       items,
@@ -81,6 +83,9 @@ export class OrdersService {
     const items = updateOrderDto.items
       ? this.validateItems(updateOrderDto.items)
       : undefined;
+    if (items) {
+      await this.ensureNoProductsOwnedByUser(normalizedUserId, items);
+    }
     const data: Prisma.OrderUpdateInput = {};
 
     if (updateOrderDto.status !== undefined) {
@@ -174,6 +179,23 @@ export class OrdersService {
       ...item,
       productId: item.productId.trim(),
     }));
+  }
+
+  private async ensureNoProductsOwnedByUser(
+    userId: string,
+    items: CreateOrderDto['items'],
+  ) {
+    const ownedProducts = await this.prisma.product.findMany({
+      where: {
+        id: { in: items.map((item) => item.productId) },
+        ownerId: userId,
+      },
+      select: { id: true },
+    });
+
+    if (ownedProducts.length > 0) {
+      throw new BadRequestException('You cannot order your own products');
+    }
   }
 
   private calculateTotal(items: CreateOrderDto['items']) {

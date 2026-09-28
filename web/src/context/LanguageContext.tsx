@@ -283,6 +283,23 @@ const spanish: Record<string, string> = {
   'Credit Card (Visa •••• 4242)': 'Tarjeta de Crédito (Visa •••• 4242)',
   'Bank Transfer': 'Transferencia Bancaria',
   'you@example.com': 'tu@correo.com',
+  'Your listing': 'Tu anuncio',
+  'Reviews ({count})': 'Reseñas ({count})',
+  'No reviews yet.': 'Todavía no hay comentarios.',
+  'Write a review': 'Escribe una reseña',
+  'Your rating': 'Tu calificación',
+  'Share your experience with this product.': 'Comparte tu experiencia con este producto.',
+  'Write a comment...': 'Escribe un comentario...',
+  'Post review': 'Publicar reseña',
+  'Update review': 'Actualizar reseña',
+  'Sign in to leave a review': 'Inicia sesión para dejar un comentario',
+  'You cannot review your own listing.': 'No puedes comentar tu propio producto.',
+  'Loading reviews...': 'Cargando comentarios...',
+  'Could not load reviews.': 'No se pudieron cargar los comentarios.',
+  'Review comment is required': 'Escribe un comentario antes de enviarlo.',
+  'Rate {count} stars': 'Calificar con {count} estrellas',
+  'You cannot buy your own product.': 'No puedes comprar tu propio producto.',
+  'Remove your own product from your cart to continue.': 'Quita tu propio producto del carrito para continuar.',
 };
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);

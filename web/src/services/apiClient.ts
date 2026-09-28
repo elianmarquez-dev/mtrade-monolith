@@ -9,6 +9,7 @@ export const buildApiUrl = (path: string) => {
 
 export const normalizeProduct = (payload: any): Product => ({
   id: payload.id,
+  ownerId: payload.ownerId,
   title: payload.name ?? payload.title,
   description: payload.description ?? '',
   price: Number(payload.price ?? 0),

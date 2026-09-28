@@ -86,6 +86,7 @@ export interface UserProfile {
 // ----------------------------------------------------
 export interface Product {
   id: string;
+  ownerId?: string;
   title: string;
   description: string;
   price: number;
@@ -98,6 +99,15 @@ export interface Product {
   sku: string;
   isFeatured?: boolean;
   tags: string[];
+}
+
+export interface ProductReview {
+  id: string;
+  userId: string;
+  authorName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
 }
 
 export interface ProductFilter {

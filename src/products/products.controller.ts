@@ -13,6 +13,7 @@ import type { AuthenticatedRequest } from '../types';
 import { Public } from '../auth/decorators/public.decorator';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
+import { CreateProductReviewDto } from './dto/create-product-review.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
@@ -56,6 +57,25 @@ export class ProductsController {
   @Get(':id')
   findOnePublic(@Param('id') id: string) {
     return this.productsService.findOnePublic(id);
+  }
+
+  @Public()
+  @Get(':id/reviews')
+  getReviews(@Param('id') id: string) {
+    return this.productsService.getReviews(id);
+  }
+
+  @Post(':id/reviews')
+  createReview(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+    @Body() createReviewDto: CreateProductReviewDto,
+  ) {
+    return this.productsService.createReview(
+      id,
+      request.user.sub,
+      createReviewDto,
+    );
   }
 
   @Patch(':id')

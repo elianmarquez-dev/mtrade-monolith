@@ -7,30 +7,41 @@ import { randomUUID } from 'node:crypto';
 
 describe('OrdersService', () => {
   let service: OrdersService;
+  let productOwners: Map<string, string>;
+  let createOrder: jest.Mock;
 
   beforeEach(async () => {
     const orders = new Map<string, any>();
+    productOwners = new Map<string, string>();
+    createOrder = jest.fn(async ({ data }) => {
+      const now = new Date();
+      const order = {
+        id: randomUUID(),
+        userId: data.userId,
+        status: 'PENDING',
+        totalAmount: new Prisma.Decimal(data.totalAmount),
+        createdAt: now,
+        updatedAt: now,
+        items: data.items.create.map((item: any) => ({
+          id: randomUUID(),
+          ...item,
+          unitPrice: new Prisma.Decimal(item.unitPrice),
+          createdAt: now,
+        })),
+      };
+      orders.set(order.id, order);
+      return order;
+    });
     const prismaMock = {
+      product: {
+        findMany: jest.fn(async ({ where }: any) =>
+          where.id.in
+            .filter((productId: string) => productOwners.get(productId) === where.ownerId)
+            .map((id: string) => ({ id })),
+        ),
+      },
       order: {
-        create: jest.fn(async ({ data }) => {
-          const now = new Date();
-          const order = {
-            id: randomUUID(),
-            userId: data.userId,
-            status: 'PENDING',
-            totalAmount: new Prisma.Decimal(data.totalAmount),
-            createdAt: now,
-            updatedAt: now,
-            items: data.items.create.map((item: any) => ({
-              id: randomUUID(),
-              ...item,
-              unitPrice: new Prisma.Decimal(item.unitPrice),
-              createdAt: now,
-            })),
-          };
-          orders.set(order.id, order);
-          return order;
-        }),
+        create: createOrder,
         findMany: jest.fn(async ({ where }: any) =>
           [...orders.values()].filter((order) => order.userId === where.userId),
         ),
@@ -95,6 +106,33 @@ describe('OrdersService', () => {
       totalAmount: 40,
     });
     expect(order.id).toBeDefined();
+  });
+
+  it('should reject an order containing a product owned by the customer', async () => {
+    productOwners.set('owned-product', 'user-1');
+
+    await expect(
+      service.create({
+        userId: 'user-1',
+        items: [{ productId: 'owned-product', quantity: 1, unitPrice: 20 }],
+      }),
+    ).rejects.toThrow('You cannot order your own products');
+
+    expect(createOrder).not.toHaveBeenCalled();
+  });
+
+  it('should reject adding a product owned by the customer to an existing order', async () => {
+    const order = await service.create({
+      userId: 'user-1',
+      items: [{ productId: 'other-product', quantity: 1, unitPrice: 20 }],
+    });
+    productOwners.set('owned-product', 'user-1');
+
+    await expect(
+      service.update(order.id, 'user-1', {
+        items: [{ productId: 'owned-product', quantity: 1, unitPrice: 20 }],
+      }),
+    ).rejects.toThrow('You cannot order your own products');
   });
 
   it('should only return orders owned by the requested user', async () => {

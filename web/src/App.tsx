@@ -231,6 +231,7 @@ const MainLayout: React.FC = () => {
       <ProductDetailModal
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}
+        onReviewSubmitted={() => setProductRefreshSignal((current) => current + 1)}
       />
       <CartDrawer />
       <CheckoutModal />
