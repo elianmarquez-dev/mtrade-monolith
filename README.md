@@ -1,126 +1,255 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# MTrade Monolith
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+MTrade is a modular monolith e-commerce platform built with NestJS, Prisma, PostgreSQL, React, and Vite. The project demonstrates a domain-oriented architecture where product, auth, users, orders, and payments are separated into clearly bounded modules, while still running from a single deployable codebase.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The application includes a production-style frontend, secure backend services, telemetry inspection, Docker orchestration, and an AWS deployment path for cloud delivery.
 
-## Description
+## Highlights
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Modular monolith architecture with five business domains:
+  - Auth
+  - Users
+  - Products
+  - Orders
+  - Payments
+- JWT-secured backend with session handling and public/private routes
+- Prisma + PostgreSQL persistence with migrations and seed support
+- Product catalog with search, filters, categories, stock checks, featured products, and reviews
+- Shopping cart, checkout flow, order history, and payment orchestration
+- Seller protection to avoid buying your own listing
+- Multi-language frontend: English and Spanish
+- API telemetry inspector for request/response tracing across modules
+- Docker Compose for local environment simulation
+- AWS ECS + CloudFront + S3 + ALB deployment scaffolding
 
-## Project setup
+## Architecture
 
-```bash
-$ npm install
+The backend is organized into isolated modules behind one NestJS application:
+
+- `auth/` — authentication, JWT generation, login/register flows, public guards, rate limits
+- `users/` — user profiles, addresses, account data management
+- `products/` — catalog, inventory, product detail, review aggregation
+- `orders/` — order creation, lifecycle, ownership validation, history
+- `payments/` — payment processing route and transaction orchestration
+- `prisma/` — Prisma config and service
+
+Frontend:
+
+- React + TypeScript UI under `web/src`
+- Vite packaging and dev server
+- Local API proxy and environment configuration
+- Custom language context and product detail experience
+
+## Core Features
+
+### Customer experience
+
+- Browse the product catalog and search by name, category, SKU, or tag
+- Filter by category and stock availability
+- Sort by rating, newest, or price asc/desc
+- View product detail modal with image, pricing, rating, stock, and tags
+- Add products to cart and manage quantity
+- Complete checkout and track recent orders
+- Review products and see aggregate scores update automatically
+- Switch interface language between English and Spanish
+
+### Seller and ownership rules
+
+- Sellers can create and manage their own products
+- Product owners cannot add their own products to their cart
+- Product owners cannot place orders for their own listings
+- Product reviews are restricted so a seller cannot review their own product
+- Review data is unique per product/user and updates aggregate rating counters
+
+### Backend platform capabilities
+
+- JWT auth guard on protected routes
+- Rate limiting guard and telemetry metrics interceptor
+- Prisma validation and schema migration workflow
+- Structured HTTP API for frontend and external clients
+- Module-level monitoring via the Monolith API Inspector
+- Health and status surfaces for local and production checks
+
+### Observability and deployment
+
+- Telemetry inspector to view calls between services and payload metadata
+- Prometheus and Grafana support in the monitoring stack
+- Docker image setup for backend and frontend
+- AWS deploy script with CloudFormation-like stack orchestration references
+
+## Tech Stack
+
+### Backend
+
+- NestJS 11
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- JWT / auth guards
+- Class-validator / class-transformer
+- Prometheus telemetry integration
+
+### Frontend
+
+- React 19
+- Vite
+- TypeScript
+- Tailwind CSS
+- Lucide icons
+
+### Operations
+
+- Docker / Docker Compose
+- AWS ECS deployment scaffolding
+- CloudFront + S3 static hosting references
+- Postgres monitoring stack
+
+## Repository Structure
+
+```text
+.
+├── prisma/
+│   ├── migrations/
+│   ├── schema.prisma
+│   └── seed.ts
+├── src/
+│   ├── app.module.ts
+│   ├── app.controller.ts
+│   ├── app.service.ts
+│   ├── auth/
+│   ├── orders/
+│   ├── payments/
+│   ├── prisma/
+│   ├── products/
+│   └── users/
+├── web/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── Dockerfile
+├── monitoring/
+│   ├── grafana/
+│   └── prometheus/
+├── docker-compose.yml
+├── Dockerfile
+├── deploy-aws.sh
+├── mtrade.yml
+├── package.json
+├── .env.example
+├── README.md
+└── tsconfig.json
 ```
 
-## Compile and run the project
+## Environment Variables
+
+Root environment example:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+NODE_ENV=development
+PORT=3000
+APP_PORT=3000
+WEB_PORT=5173
+DATABASE_URL=postgresql://mtrade_user:change-me@localhost:5432/mtrade_db
+JWT_SECRET=change-me-to-a-long-random-secret
+CORS_ORIGIN=http://localhost:5173
+RATE_LIMIT_BUCKET_CAPACITY=60
+RATE_LIMIT_REFILL_PER_SECOND=2
 ```
 
-### Docker Compose
-
-Copy `.env.example` to `.env`. Docker Compose reads `NODE_ENV` from `.env`:
+Frontend environment example:
 
 ```bash
-# Build and run the production-like images locally
+VITE_API_BASE_URL=http://localhost:3000/api
+```
+
+## Getting Started
+
+### 1) Install dependencies
+
+```bash
+npm install
+cd web && npm install
+```
+
+### 2) Start PostgreSQL and local services
+
+```bash
 docker compose up --build
 ```
 
-Compose runs the compiled backend image and the Nginx frontend image. Changes
-to source files require rebuilding the affected image. For a development
-watcher, run the Nest and Vite commands directly from their respective
-directories. Set a strong `JWT_SECRET` and non-default passwords in
-production.
+This starts the backend API, the web frontend, PostgreSQL, Prometheus, and Grafana.
 
-## Database and monitoring
+### 3) Run the backend in watch mode
 
-The PostgreSQL schema is defined in `prisma/schema.prisma`. Set `DATABASE_URL`
-before running Prisma commands:
+From the project root:
 
 ```bash
-npm run prisma:validate
+npm run start:dev
+```
+
+### 4) Run the frontend in dev mode
+
+From the `web` folder:
+
+```bash
+npm run dev
+```
+
+The frontend is typically served at `http://localhost:5173` and proxies to the backend at `http://localhost:3000`.
+
+## Database and Prisma
+
+Generate the Prisma client and validate the schema:
+
+```bash
 npm run prisma:generate
+npm run prisma:validate
+```
+
+Create or apply migrations:
+
+```bash
 npm run prisma:migrate:dev -- --name init
 ```
 
-Docker Compose also starts `postgres-exporter`. Prometheus scrapes it internally
-at `postgres-exporter:9187` and exposes the resulting PostgreSQL metrics through
-the configured Prometheus datasource.
-
-## Run tests
+Seed the database:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run prisma:seed
 ```
 
-## Deployment
+## Testing
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-### AWS ECS
-
-The backend and frontend are independent production images. Build and publish
-them to ECR from the repository root:
+Run the backend test suite:
 
 ```bash
-docker build -t mtrade-api .
-docker build --build-arg VITE_API_BASE_URL=/api -t mtrade-web ./web
+npm test
 ```
 
-Run the API as an ECS service on port `3000` with the container health check
-`/api/health`. The Vite frontend is built as static files and served from the
-private S3 bucket through CloudFront. CloudFront forwards `/api/*` to the API
-ALB, allowing the frontend to use the default `VITE_API_BASE_URL=/api` without
-embedding an environment-specific hostname.
-
-Inject `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, and `NODE_ENV=production`
-from AWS Secrets Manager or SSM Parameter Store. `DATABASE_URL` should point
-to an RDS/Aurora PostgreSQL instance, not the Compose `postgres` hostname.
-Apply Prisma migrations as a release task before shifting traffic to a new
-API revision:
+Run with coverage:
 
 ```bash
-npx prisma migrate deploy
+npm run test:cov
 ```
 
-The repository includes `mtrade.yml`, which provisions the VPC, private RDS
-PostgreSQL, ECS/Fargate API, ALB, and a private S3 bucket served by CloudFront.
-The deploy script creates the ECR repository when needed. The complete first
-deployment can be run after configuring AWS credentials and Docker:
+Run the end-to-end suite:
+
+```bash
+npm run test:e2e
+```
+
+## Production Deployment
+
+The project includes deployment plumbing for containerized AWS hosting:
+
+- backend image build via root `Dockerfile`
+- frontend static build via `web/Dockerfile`
+- ECS-ready stack sample in `mtrade.yml`
+- AWS deployment script in `deploy-aws.sh`
+- static web hosting via S3 + CloudFront concept
+
+Example:
 
 ```bash
 export AWS_REGION=us-east-1
@@ -129,52 +258,27 @@ export JWT_SECRET="$(openssl rand -base64 48)"
 ./deploy-aws.sh
 ```
 
-The script builds the frontend and backend, publishes the backend image,
-deploys the stack with the new image, waits for ECS stability, builds the Vite
-frontend with `VITE_API_BASE_URL=/api`,
-uploads `web/dist` to S3, and invalidates CloudFront. CloudFront serves the
-static files from S3 and forwards `/api/*` to the ALB, so the browser uses one
-HTTPS origin. Subsequent releases reuse the same command;
-the immutable ECR tag is generated from the UTC timestamp.
+## API Overview
 
-For local production-like validation, `docker compose up --build` starts the
-frontend at `http://localhost:5173` and the API at `http://localhost:3000`.
-The local frontend points directly to the API; ECS builds should override
-`VITE_API_BASE_URL=/api` because the ALB handles path-based routing there.
+The backend exposes modular routes under `/api` and the app uses a service-level proxy model for each module. Common flows include:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment).
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- `POST /auth/login`
+- `POST /auth/register`
+- `GET /products`
+- `GET /products/categories`
+- `POST /products`
+- `POST /products/:id/reviews`
+- `GET /orders`
+- `POST /orders`
+- `GET /payments`
+- `POST /payments/process`
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+You can inspect telemetry in the Monolith API Inspector UI as requests are made.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Notes
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+This project is designed as a product demonstration and a modular monolith reference implementation. It blends business domain isolation with a practical single-service deployment model and is intended to be a strong starting point for e-commerce or commerce platform experimentation.
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project currently ships with the repository default licensing setup and should be reviewed before production public release.
