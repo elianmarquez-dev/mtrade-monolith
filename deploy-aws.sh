@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 STACK_NAME="${STACK_NAME:-mtrade}"
 AWS_REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}"
 TEMPLATE_FILE="${TEMPLATE_FILE:-mtrade.yml}"
@@ -18,10 +21,92 @@ SECRETS_FILE="${SECRETS_FILE:-.mtrade-deploy-secrets}"
 IMAGE_TAG="${IMAGE_TAG:-$(date -u +%Y%m%d%H%M%S)}"
 WAF_RATE_LIMIT="${WAF_RATE_LIMIT:-1000}"
 
+preflight() {
+  local command_name node_version node_major
+
+  for command_name in aws docker node npm openssl; do
+    if ! command -v "$command_name" >/dev/null 2>&1; then
+      echo "Required command not found: $command_name. Install it and run this script again." >&2
+      return 1
+    fi
+  done
+
+  node_version="$(node --version)"
+  if [[ ! "$node_version" =~ ^v([0-9]+)\. ]]; then
+    echo "Unable to determine the Node.js version (found: $node_version)" >&2
+    return 1
+  fi
+  node_major="${BASH_REMATCH[1]}"
+  if (( 10#$node_major < 20 )); then
+    echo "Node.js 20 or newer is required to build the frontend (found: $node_version)" >&2
+    return 1
+  fi
+
+  if [[ ! "$WAF_RATE_LIMIT" =~ ^[0-9]{1,10}$ ]] || (( 10#$WAF_RATE_LIMIT < 10 || 10#$WAF_RATE_LIMIT > 2000000000 )); then
+    echo "WAF_RATE_LIMIT must be an integer between 10 and 2000000000" >&2
+    return 1
+  fi
+
+  if [[ ! -f "$TEMPLATE_FILE" ]]; then
+    echo "CloudFormation template not found: $TEMPLATE_FILE" >&2
+    return 1
+  fi
+
+  if ! ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text 2>/dev/null)"; then
+    echo "AWS credentials are missing or expired. Configure an AWS profile, then run this script again." >&2
+    return 1
+  fi
+
+  if [[ -z "$ACCOUNT_ID" || "$ACCOUNT_ID" == "None" ]]; then
+    echo "Unable to determine the active AWS account. Check your AWS credentials." >&2
+    return 1
+  fi
+
+  if ! docker info >/dev/null 2>&1; then
+    echo "Docker is installed but its daemon is not available. Start Docker and try again." >&2
+    return 1
+  fi
+
+  echo "==> AWS account: $ACCOUNT_ID; region: $AWS_REGION"
+  echo "==> Validating CloudFormation template..."
+  aws cloudformation validate-template \
+    --region "$AWS_REGION" \
+    --template-body "file://$TEMPLATE_FILE" \
+    >/dev/null
+}
+
 load_or_generate_secrets() {
+  local line key raw_value line_number=0 ignored_lines=0
+
   if [[ -f "$SECRETS_FILE" ]]; then
-    # shellcheck disable=SC1090
-    source "$SECRETS_FILE"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      ((line_number += 1))
+      [[ -z "$line" || "$line" == \#* ]] && continue
+
+      case "$line" in
+        DB_PASSWORD=*|JWT_SECRET=*)
+          key="${line%%=*}"
+          raw_value="${line#*=}"
+          if [[ "$raw_value" != \'*\' ]]; then
+            echo "Invalid $key format in $SECRETS_FILE at line $line_number; expected a single-quoted alphanumeric value" >&2
+            return 1
+          fi
+          raw_value="${raw_value:1:${#raw_value}-2}"
+          if [[ ! "$raw_value" =~ ^[A-Za-z0-9]+$ ]]; then
+            echo "Invalid $key value in $SECRETS_FILE at line $line_number; expected alphanumeric characters only" >&2
+            return 1
+          fi
+          printf -v "$key" '%s' "$raw_value"
+          ;;
+        *)
+          ((ignored_lines += 1))
+          ;;
+      esac
+    done < "$SECRETS_FILE"
+
+    if (( ignored_lines > 0 )); then
+      echo "Warning: ignored $ignored_lines non-secret line(s) in $SECRETS_FILE; only DB_PASSWORD and JWT_SECRET assignments are read." >&2
+    fi
   fi
 
   local generated=false
@@ -57,6 +142,11 @@ EOF
     echo "==> Generated and saved deploy secrets to $SECRETS_FILE (keep this safe and out of git; reused on future runs)"
   fi
 }
+
+preflight
+
+echo "==> Installing frontend dependencies from package-lock.json..."
+npm ci --prefix web
 
 load_or_generate_secrets
 
@@ -156,6 +246,7 @@ ECS_SERVICE="$(stack_output ECSService)"
 FRONTEND_BUCKET="$(stack_output FrontendBucketName)"
 CLOUDFRONT_DISTRIBUTION_ID="$(stack_output CloudFrontDistributionId)"
 BACKEND_URL="$(stack_output BackendURL)"
+FRONTEND_URL="$(stack_output FrontendURL)"
 
 echo "==> Waiting for ECS service to become stable..."
 
@@ -219,7 +310,6 @@ echo
 echo "========================================"
 echo "Deployment complete."
 echo "========================================"
-echo "Frontend: $(stack_output FrontendURL)"
+echo "Frontend: $FRONTEND_URL"
 echo "Backend:  $BACKEND_URL"
 echo "Image:    $ECR_REPOSITORY_URI:$IMAGE_TAG"
-echo

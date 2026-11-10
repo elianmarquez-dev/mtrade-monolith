@@ -65,45 +65,20 @@ AWS request protections include:
 
 - An AWS account with permissions to create CloudFormation, IAM roles, VPC/networking, ECS/Fargate, ECR, RDS, Secrets Manager, S3, CloudFront, an Application Load Balancer, and AWS WAF. The deployer also needs permission to describe EC2 managed prefix lists.
 - AWS CLI configured with credentials for that account. Verify access with `aws sts get-caller-identity`.
-- Docker, Node.js/npm, Bash, and OpenSSL installed.
-- Run the commands from the repository root.
+- Docker, Node.js 20+/npm, Bash, and OpenSSL installed.
+- AWS CLI configured with a valid profile; the deploy script can be run from any directory.
 
-Install the JavaScript dependencies before the first deployment:
-
-```bash
-npm ci
-npm ci --prefix web
-```
-
-### First deployment
-
-Choose the AWS region and, if needed, an AWS CLI profile:
-
-```bash
-export AWS_REGION=us-east-1
-# Optional:
-export AWS_PROFILE=my-aws-profile
-```
-
-Deploy the full stack:
+After configuring a valid AWS CLI profile on the machine, the same command performs the first deployment and later updates. The script defaults to `us-east-1`; set a profile or region only if needed:
 
 ```bash
 ./deploy-aws.sh
 ```
 
+The script checks AWS credentials, Docker, the template, and deployment settings; installs frontend dependencies; builds and deploys the complete stack; and waits for ECS and CloudFront. Backend dependencies are installed as part of the Docker multi-stage build. It can be run from any working directory. AWS CLI, Docker, and valid AWS credentials remain required prerequisites.
+
 The script creates the ECR repository if needed and generates `DB_PASSWORD` and `JWT_SECRET` if they are not supplied. It saves generated values to `.mtrade-deploy-secrets` with restrictive file permissions and reuses them on later runs. Keep this file backed up securely and out of version control; losing it can prevent the application from connecting to the existing database. Do not share or commit it.
 
-When deployment finishes, retrieve the frontend and API URLs:
-
-```bash
-aws cloudformation describe-stacks \
-  --region "$AWS_REGION" \
-  --stack-name mtrade \
-  --query 'Stacks[0].Outputs[].[OutputKey,OutputValue]' \
-  --output table
-```
-
-Open the `FrontendURL` output. Check API health at `<FrontendURL>/api/health`. The `BackendURL` output is the ALB origin; the security group intentionally allows requests to it only from CloudFront.
+On success, the script prints the frontend URL, backend origin, and image tag. The frontend URL serves the API through `/api`; the backend origin is intentionally reachable only through CloudFront.
 
 ### Subsequent deployments and options
 
