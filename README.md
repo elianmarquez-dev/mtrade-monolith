@@ -1,284 +1,164 @@
 # MTrade Monolith
 
-MTrade is a modular monolith e-commerce platform built with NestJS, Prisma, PostgreSQL, React, and Vite. The project demonstrates a domain-oriented architecture where product, auth, users, orders, and payments are separated into clearly bounded modules, while still running from a single deployable codebase.
-
-The application includes a production-style frontend, secure backend services, telemetry inspection, Docker orchestration, and an AWS deployment path for cloud delivery.
-
-## Highlights
-
-- Modular monolith architecture with five business domains:
-  - Auth
-  - Users
-  - Products
-  - Orders
-  - Payments
-- JWT-secured backend with session handling and public/private routes
-- Prisma + PostgreSQL persistence with migrations and seed support
-- Product catalog with search, filters, categories, stock checks, featured products, and reviews
-- Shopping cart, checkout flow, order history, and payment orchestration
-- Seller protection to avoid buying your own listing
-- Multi-language frontend: English and Spanish
-- API telemetry inspector for request/response tracing across modules
-- Docker Compose for local environment simulation
-- AWS ECS + CloudFront + S3 + ALB deployment scaffolding
+MTrade is an e-commerce application with a NestJS API, PostgreSQL database, and React/Vite frontend. The API uses Prisma for database access and migrations.
 
 ## Architecture
 
-The backend is organized into isolated modules behind one NestJS application:
+- `src/`: NestJS API and its auth, users, products, orders, and payments modules.
+- `prisma/`: PostgreSQL schema, migrations, and seed script.
+- `web/`: React/Vite frontend.
+- `docker-compose.yml`: local services, including PostgreSQL and monitoring.
+- `mtrade.yml`: AWS CloudFormation template for the production stack.
+- `deploy-aws.sh`: builds and deploys the frontend and backend to AWS.
 
-- `auth/` — authentication, JWT generation, login/register flows, public guards, rate limits
-- `users/` — user profiles, addresses, account data management
-- `products/` — catalog, inventory, product detail, review aggregation
-- `orders/` — order creation, lifecycle, ownership validation, history
-- `payments/` — payment processing route and transaction orchestration
-- `prisma/` — Prisma config and service
+Both Dockerfiles use multi-stage builds. The root `Dockerfile` compiles the API in a Node build stage and copies only production dependencies, Prisma artifacts, and compiled output into a non-root runtime image. `web/Dockerfile` builds the frontend with Node and serves only the static output from an Nginx runtime image. The AWS deploy script uses the root Dockerfile for ECS and builds the frontend directly for S3/CloudFront.
 
-Frontend:
+## Local development
 
-- React + TypeScript UI under `web/src`
-- Vite packaging and dev server
-- Local API proxy and environment configuration
-- Custom language context and product detail experience
+Requirements: Node.js/npm and Docker Compose.
 
-## Core Features
-
-### Customer experience
-
-- Browse the product catalog and search by name, category, SKU, or tag
-- Filter by category and stock availability
-- Sort by rating, newest, or price asc/desc
-- View product detail modal with image, pricing, rating, stock, and tags
-- Add products to cart and manage quantity
-- Complete checkout and track recent orders
-- Review products and see aggregate scores update automatically
-- Switch interface language between English and Spanish
-
-### Seller and ownership rules
-
-- Sellers can create and manage their own products
-- Product owners cannot add their own products to their cart
-- Product owners cannot place orders for their own listings
-- Product reviews are restricted so a seller cannot review their own product
-- Review data is unique per product/user and updates aggregate rating counters
-
-### Backend platform capabilities
-
-- JWT auth guard on protected routes
-- Rate limiting guard and telemetry metrics interceptor
-- Prisma validation and schema migration workflow
-- Structured HTTP API for frontend and external clients
-- Module-level monitoring via the Monolith API Inspector
-- Health and status surfaces for local and production checks
-
-### Observability and deployment
-
-- Telemetry inspector to view calls between services and payload metadata
-- Prometheus and Grafana support in the monitoring stack
-- Docker image setup for backend and frontend
-- AWS deploy script with CloudFormation-like stack orchestration references
-
-## Tech Stack
-
-### Backend
-
-- NestJS 11
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- JWT / auth guards
-- Class-validator / class-transformer
-- Prometheus telemetry integration
-
-### Frontend
-
-- React 19
-- Vite
-- TypeScript
-- Tailwind CSS
-- Lucide icons
-
-### Operations
-
-- Docker / Docker Compose
-- AWS ECS deployment scaffolding
-- CloudFront + S3 static hosting references
-- Postgres monitoring stack
-
-## Repository Structure
-
-```text
-.
-├── prisma/
-│   ├── migrations/
-│   ├── schema.prisma
-│   └── seed.ts
-├── src/
-│   ├── app.module.ts
-│   ├── app.controller.ts
-│   ├── app.service.ts
-│   ├── auth/
-│   ├── orders/
-│   ├── payments/
-│   ├── prisma/
-│   ├── products/
-│   └── users/
-├── web/
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── Dockerfile
-├── monitoring/
-│   ├── grafana/
-│   └── prometheus/
-├── docker-compose.yml
-├── Dockerfile
-├── deploy-aws.sh
-├── mtrade.yml
-├── package.json
-├── .env.example
-├── README.md
-└── tsconfig.json
-```
-
-## Environment Variables
-
-Root environment example:
+Install dependencies:
 
 ```bash
-NODE_ENV=development
-PORT=3000
-APP_PORT=3000
-WEB_PORT=5173
-DATABASE_URL=postgresql://mtrade_user:change-me@localhost:5432/mtrade_db
-JWT_SECRET=change-me-to-a-long-random-secret
-CORS_ORIGIN=http://localhost:5173
-RATE_LIMIT_BUCKET_CAPACITY=60
-RATE_LIMIT_REFILL_PER_SECOND=2
+npm ci
+npm ci --prefix web
 ```
 
-Frontend environment example:
-
-```bash
-VITE_API_BASE_URL=http://localhost:3000/api
-```
-
-## Getting Started
-
-### 1) Install dependencies
-
-```bash
-npm install
-cd web && npm install
-```
-
-### 2) Start PostgreSQL and local services
+Copy `.env.example` to `.env`, set local values, then start the services:
 
 ```bash
 docker compose up --build
 ```
 
-This starts the backend API, the web frontend, PostgreSQL, Prometheus, and Grafana.
-
-### 3) Run the backend in watch mode
-
-From the project root:
+The API is available at `http://localhost:3000`; the web app is at `http://localhost:5173`. To run either app outside Compose:
 
 ```bash
 npm run start:dev
+npm --prefix web run dev
 ```
 
-### 4) Run the frontend in dev mode
-
-From the `web` folder:
+## Tests and database
 
 ```bash
-npm run dev
-```
-
-The frontend is typically served at `http://localhost:5173` and proxies to the backend at `http://localhost:3000`.
-
-## Database and Prisma
-
-Generate the Prisma client and validate the schema:
-
-```bash
+npm test
+npm run test:e2e
 npm run prisma:generate
 npm run prisma:validate
 ```
 
-Create or apply migrations:
+Create a development migration with `npm run prisma:migrate:dev -- --name <name>` and seed the local database with `npm run prisma:seed`.
+
+## Full AWS deployment
+
+The deployment script builds the Vite frontend and the API Docker image, pushes the image to ECR, deploys `mtrade.yml` with CloudFormation, waits for ECS, uploads the frontend to S3, and invalidates CloudFront. The container applies pending Prisma migrations when it starts.
+
+The CloudFormation stack creates an ECS Fargate service behind an Application Load Balancer, a private PostgreSQL RDS instance, Secrets Manager secrets, a private S3 bucket, and a CloudFront distribution. CloudFront serves the frontend over HTTPS and routes `/api/*` to the backend.
+
+AWS request protections include:
+
+- The ALB security group accepts HTTP only from the AWS-managed CloudFront origin-facing prefix list. The deploy script looks up its ID for the selected region; deployment stops with an error if it is unavailable.
+- A regional AWS WAF web ACL on the ALB blocks a client IP after 1,000 requests in a five-minute window by default. WAF uses the last address in `X-Forwarded-For` (CloudFront appends the viewer IP) and exposes sampled requests and metrics in CloudWatch.
+- ECS accepts application traffic only from the ALB security group, and RDS is private and accepts PostgreSQL connections only from ECS.
+- The API also has an in-process token-bucket limit (60-request burst, refilling at 2 requests/second by default). In production, Express trusts the two known proxy hops (CloudFront and ALB) so this limiter uses the client IP forwarded through CloudFront. This is per task, not a shared distributed limit; WAF is the edge-level control.
+
+### Requirements
+
+- An AWS account with permissions to create CloudFormation, IAM roles, VPC/networking, ECS/Fargate, ECR, RDS, Secrets Manager, S3, CloudFront, an Application Load Balancer, and AWS WAF. The deployer also needs permission to describe EC2 managed prefix lists.
+- AWS CLI configured with credentials for that account. Verify access with `aws sts get-caller-identity`.
+- Docker, Node.js/npm, Bash, and OpenSSL installed.
+- Run the commands from the repository root.
+
+Install the JavaScript dependencies before the first deployment:
 
 ```bash
-npm run prisma:migrate:dev -- --name init
+npm ci
+npm ci --prefix web
 ```
 
-Seed the database:
+### First deployment
 
-```bash
-npm run prisma:seed
-```
-
-## Testing
-
-Run the backend test suite:
-
-```bash
-npm test
-```
-
-Run with coverage:
-
-```bash
-npm run test:cov
-```
-
-Run the end-to-end suite:
-
-```bash
-npm run test:e2e
-```
-
-## Production Deployment
-
-The project includes deployment plumbing for containerized AWS hosting:
-
-- backend image build via root `Dockerfile`
-- frontend static build via `web/Dockerfile`
-- ECS-ready stack sample in `mtrade.yml`
-- AWS deployment script in `deploy-aws.sh`
-- static web hosting via S3 + CloudFront concept
-
-Example:
+Choose the AWS region and, if needed, an AWS CLI profile:
 
 ```bash
 export AWS_REGION=us-east-1
-export DB_PASSWORD='use-a-strong-password-here'
-export JWT_SECRET="$(openssl rand -base64 48)"
+# Optional:
+export AWS_PROFILE=my-aws-profile
+```
+
+Deploy the full stack:
+
+```bash
 ./deploy-aws.sh
 ```
 
-## API Overview
+The script creates the ECR repository if needed and generates `DB_PASSWORD` and `JWT_SECRET` if they are not supplied. It saves generated values to `.mtrade-deploy-secrets` with restrictive file permissions and reuses them on later runs. Keep this file backed up securely and out of version control; losing it can prevent the application from connecting to the existing database. Do not share or commit it.
 
-The backend exposes modular routes under `/api` and the app uses a service-level proxy model for each module. Common flows include:
+When deployment finishes, retrieve the frontend and API URLs:
 
-- `POST /auth/login`
-- `POST /auth/register`
-- `GET /products`
-- `GET /products/categories`
-- `POST /products`
-- `POST /products/:id/reviews`
-- `GET /orders`
-- `POST /orders`
-- `GET /payments`
-- `POST /payments/process`
+```bash
+aws cloudformation describe-stacks \
+  --region "$AWS_REGION" \
+  --stack-name mtrade \
+  --query 'Stacks[0].Outputs[].[OutputKey,OutputValue]' \
+  --output table
+```
 
-You can inspect telemetry in the Monolith API Inspector UI as requests are made.
+Open the `FrontendURL` output. Check API health at `<FrontendURL>/api/health`. The `BackendURL` output is the ALB origin; the security group intentionally allows requests to it only from CloudFront.
 
-## Notes
+### Subsequent deployments and options
 
-This project is designed as a product demonstration and a modular monolith reference implementation. It blends business domain isolation with a practical single-service deployment model and is intended to be a strong starting point for e-commerce or commerce platform experimentation.
+Run `./deploy-aws.sh` again to deploy changes. The default stack is `mtrade`, the default region is `us-east-1`, and the default ECR repository is `mtrade/monolith`. The script assigns a new timestamp image tag unless `IMAGE_TAG` is set.
 
-## License
+Useful environment variables:
 
-This project currently ships with the repository default licensing setup and should be reviewed before production public release.
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `AWS_REGION` | AWS deployment region | `us-east-1` (or `AWS_DEFAULT_REGION`) |
+| `AWS_PROFILE` | AWS CLI profile | AWS CLI's configured credential chain |
+| `STACK_NAME` | CloudFormation stack name | `mtrade` |
+| `ECR_REPOSITORY_NAME` | ECR repository | `mtrade/monolith` |
+| `IMAGE_TAG` | Backend image tag | Current UTC timestamp |
+| `WAF_RATE_LIMIT` | Requests per client IP before WAF blocks, in a five-minute window (minimum 10) | `1000` |
+| `ADDITIONAL_CORS_ORIGIN` | Additional allowed frontend origin | Empty |
+| `TEMPLATE_FILE` | CloudFormation template path | `mtrade.yml` |
+
+For example, to allow another frontend origin:
+
+```bash
+ADDITIONAL_CORS_ORIGIN=https://shop.example.com ./deploy-aws.sh
+```
+
+If you provide `DB_PASSWORD` or `JWT_SECRET` yourself, preserve those values securely; the script only writes the secrets file when it generates at least one of them. The database password must be at least 16 characters, and the JWT secret at least 32 characters.
+
+After each successful deployment, the script deletes other tagged images in the configured ECR repository. Keep a separate backup if you need older images for rollback. The template uses fixed AWS resource names, so do not deploy multiple copies of this stack into the same account and region.
+
+### Costs and production considerations
+
+AWS charges apply while the stack is running. In particular, review the costs for RDS, Fargate, the load balancer, AWS WAF, CloudFront, S3, data transfer, and CloudWatch Logs in your selected region. The template uses a single-AZ `db.t4g.micro` database and an HTTP listener on the public load balancer; ALB access is restricted to CloudFront origin-facing IP ranges, and CloudFront serves the frontend over HTTPS. Review and adapt the template for your availability, domain, and TLS requirements before using it for production workloads.
+
+To remove the stack, empty the frontend bucket first, then delete the CloudFormation stack:
+
+```bash
+FRONTEND_BUCKET="$(aws cloudformation describe-stacks \
+  --region "$AWS_REGION" \
+  --stack-name mtrade \
+  --query "Stacks[0].Outputs[?OutputKey=='FrontendBucketName'].OutputValue" \
+  --output text)"
+
+aws s3 rm "s3://$FRONTEND_BUCKET" --recursive --region "$AWS_REGION"
+aws cloudformation delete-stack --region "$AWS_REGION" --stack-name mtrade
+aws cloudformation wait stack-delete-complete --region "$AWS_REGION" --stack-name mtrade
+```
+
+RDS has a snapshot deletion policy, so deleting the stack retains a database snapshot that may continue to incur charges. The ECR repository is created outside CloudFormation and is not deleted with the stack; delete it separately if it is no longer needed.
+
+## API
+
+The API is served under `/api`. Main routes include:
+
+- `POST /api/auth/login` and `POST /api/auth/register`
+- `GET /api/products` and `GET /api/products/categories`
+- `POST /api/products` and `POST /api/products/:id/reviews`
+- `GET /api/orders` and `POST /api/orders`
+- `GET /api/payments` and `POST /api/payments/process`
+- `GET /api/health`

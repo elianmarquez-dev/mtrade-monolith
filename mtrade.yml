@@ -24,6 +24,16 @@ Parameters:
     Type: String
     Default: ''
 
+  CloudFrontOriginFacingPrefixListId:
+    Type: String
+    Description: AWS-managed CloudFront origin-facing prefix list ID for this region
+
+  RateLimitRequests:
+    Type: Number
+    Default: 1000
+    MinValue: 10
+    Description: Maximum requests per client IP in a five-minute WAF window
+
   DesiredCount:
     Type: Number
     Default: 1
@@ -122,7 +132,42 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: 0.0.0.0/0
+          SourcePrefixListId: !Ref CloudFrontOriginFacingPrefixListId
+
+  ApiWebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub '${AWS::StackName}-api-rate-limit'
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: true
+        MetricName: ApiWebACL
+        SampledRequestsEnabled: true
+      Rules:
+        - Name: PerClientIpRateLimit
+          Priority: 0
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: !Ref RateLimitRequests
+              AggregateKeyType: FORWARDED_IP
+              ForwardedIPConfig:
+                HeaderName: X-Forwarded-For
+                Position: LAST
+                FallbackBehavior: MATCH
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: true
+            MetricName: PerClientIpRateLimit
+            SampledRequestsEnabled: true
+
+  ApiWebACLAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn: !Ref ALB
+      WebACLArn: !GetAtt ApiWebACL.Arn
 
   ECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -280,6 +325,7 @@ Resources:
                 - Origin
                 - Accept
                 - X-Requested-With
+                - X-Forwarded-For
             MinTTL: 0
             DefaultTTL: 0
             MaxTTL: 0
@@ -514,6 +560,7 @@ Resources:
     DependsOn:
       - HTTPListener
       - PostgreSQL
+      - ApiWebACLAssociation
 
     Properties:
       ServiceName: mtrade

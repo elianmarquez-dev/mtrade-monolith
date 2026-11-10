@@ -16,6 +16,7 @@ ECR_REPOSITORY_NAME="${ECR_REPOSITORY_NAME:-mtrade/monolith}"
 SECRETS_FILE="${SECRETS_FILE:-.mtrade-deploy-secrets}"
 
 IMAGE_TAG="${IMAGE_TAG:-$(date -u +%Y%m%d%H%M%S)}"
+WAF_RATE_LIMIT="${WAF_RATE_LIMIT:-1000}"
 
 load_or_generate_secrets() {
   if [[ -f "$SECRETS_FILE" ]]; then
@@ -59,6 +60,24 @@ EOF
 
 load_or_generate_secrets
 
+cloudfront_prefix_list_id() {
+  local prefix_list_id
+  prefix_list_id="$(aws ec2 describe-managed-prefix-lists \
+    --region "$AWS_REGION" \
+    --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing \
+    --query 'PrefixLists[0].PrefixListId' \
+    --output text)"
+
+  if [[ -z "$prefix_list_id" || "$prefix_list_id" == "None" ]]; then
+    echo "CloudFront origin-facing managed prefix list is unavailable in $AWS_REGION" >&2
+    return 1
+  fi
+
+  printf '%s' "$prefix_list_id"
+}
+
+CLOUDFRONT_PREFIX_LIST_ID="$(cloudfront_prefix_list_id)"
+
 ensure_ecr_repository() {
   local repo_name="$1"
 
@@ -101,6 +120,8 @@ deploy_stack() {
       DesiredCount=1 \
       DBPassword="$DB_PASSWORD" \
       JWTSecret="$JWT_SECRET" \
+      CloudFrontOriginFacingPrefixListId="$CLOUDFRONT_PREFIX_LIST_ID" \
+      RateLimitRequests="$WAF_RATE_LIMIT" \
       AdditionalCorsOrigin="${ADDITIONAL_CORS_ORIGIN:-}"
 }
 
