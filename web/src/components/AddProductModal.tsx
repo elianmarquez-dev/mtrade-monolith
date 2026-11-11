@@ -21,6 +21,8 @@ type ProductForm = {
   tags: string;
 };
 
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+
 const initialForm: ProductForm = {
   name: '',
   description: '',
@@ -77,12 +79,41 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
     }
   };
 
+  const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError(t('Selecciona un archivo de imagen válido.'));
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setError(t('El archivo de imagen no puede superar 5 MB.'));
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        setError(t('No se pudo leer el archivo de imagen.'));
+        return;
+      }
+
+      updateField('imageUrl', reader.result);
+      setError('');
+    };
+    reader.onerror = () => setError(t('No se pudo leer el archivo de imagen.'));
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <form onSubmit={handleSubmit} className="relative bg-white rounded-2xl w-full max-w-2xl shadow-2xl border border-stone-200">
         <div className="flex items-center justify-between px-6 py-5 border-b border-stone-100">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Products Service</p>
             <h2 className="text-xl font-bold text-stone-900">{t('Agregar producto')}</h2>
           </div>
           <button type="button" onClick={onClose} className="p-2 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100" aria-label={t('Cerrar')}>
@@ -109,9 +140,19 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
           <label className="text-sm font-semibold text-stone-700">SKU
             <input value={form.sku} onChange={(event) => updateField('sku', event.target.value)} className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none" />
           </label>
-          <label className="sm:col-span-2 text-sm font-semibold text-stone-700"><span className="inline-flex items-center gap-1.5">{t('Imagen')} <ImagePlus className="w-3.5 h-3.5 text-stone-400" /></span>
-            <input type="url" value={form.imageUrl} onChange={(event) => updateField('imageUrl', event.target.value)} placeholder="https://..." className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none" />
-          </label>
+          <div className="sm:col-span-2 text-sm font-semibold text-stone-700">
+            <label htmlFor="product-image-url" className="inline-flex items-center gap-1.5">{t('Imagen')} <ImagePlus className="w-3.5 h-3.5 text-stone-400" /></label>
+            <input id="product-image-url" type="text" inputMode="url" value={form.imageUrl.startsWith('data:') ? '' : form.imageUrl} onChange={(event) => updateField('imageUrl', event.target.value)} placeholder="https://..." className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none" />
+            <label htmlFor="product-image-file" className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 px-3 py-2 font-medium text-stone-600 hover:bg-stone-50">
+              <ImagePlus className="w-4 h-4" />
+              {t('Subir imagen desde tu PC')}
+            </label>
+            <input id="product-image-file" type="file" accept="image/*" onChange={handleImageFileChange} className="sr-only" />
+            <p className="mt-1 text-xs font-normal text-stone-500">{t('Tamaño máximo: 5 MB.')}</p>
+            {form.imageUrl.startsWith('data:image/') && (
+              <img src={form.imageUrl} alt={t('Vista previa de la imagen')} className="mt-3 h-24 w-24 rounded-lg border border-stone-200 object-cover" />
+            )}
+          </div>
           <label className="sm:col-span-2 text-sm font-semibold text-stone-700">{t('Etiquetas')}
             <input value={form.tags} onChange={(event) => updateField('tags', event.target.value)} placeholder={t('hogar, nuevo, oferta')} className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 font-normal focus:border-emerald-600 focus:outline-none" />
           </label>

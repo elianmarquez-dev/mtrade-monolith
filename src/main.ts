@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
@@ -24,7 +25,10 @@ const allowedOrigins = configuredOrigins.length > 0
   : defaultAllowedOrigins;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
+  });
+  app.useBodyParser('json', { limit: '10mb' });
   if (process.env.NODE_ENV === 'production') {
     app.getHttpAdapter().getInstance().set('trust proxy', 2);
   }

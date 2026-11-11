@@ -89,7 +89,7 @@ model Product {
   price        Decimal       @db.Decimal(12, 2)
   stock        Int           @default(0)
   category     String?       @db.VarChar(80)
-  imageUrl     String?       @db.VarChar(255)
+  imageUrl     String?       @db.Text
   rating       Decimal?      @db.Decimal(3, 2)
   reviewsCount Int           @default(0)
   sku          String?       @unique @db.VarChar(80)
