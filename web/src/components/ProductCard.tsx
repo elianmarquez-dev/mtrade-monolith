@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { Star, ShoppingBag, Eye, Check, AlertCircle } from 'lucide-react';
+import { Star, ShoppingBag, Eye, Check, Trash2, LoaderCircle } from 'lucide-react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { productsService } from '../services';
 
 interface ProductCardProps {
   product: Product;
   onQuickView: (product: Product) => void;
+  onDeleted: () => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, onDeleted }) => {
   const { addItem } = useCart();
   const { session } = useAuth();
   const { t } = useLanguage();
   const [justAdded, setJustAdded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -31,6 +35,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
   const isOutOfStock = product.stock <= 0;
   const isOwner = Boolean(session && product.ownerId === session.id);
   const isLowStock = product.stock > 0 && product.stock <= 8;
+
+  const handleDelete = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!isOwner || isDeleting) return;
+    if (!window.confirm(t('¿Seguro que quieres eliminar este producto?'))) return;
+
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      await productsService.removeProduct(product.id);
+      onDeleted();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : t('No se pudo eliminar el producto.'));
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div
@@ -60,6 +80,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
             </span>
           )}
         </div>
+        {isOwner && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            aria-label={t('Eliminar mi producto')}
+            title={t('Eliminar mi producto')}
+            className="absolute top-2 right-2 rounded-full bg-white/95 p-2 text-rose-600 shadow hover:bg-rose-50 disabled:opacity-60"
+          >
+            {isDeleting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </button>
+        )}
 
         {/* Quick View Hover Action */}
         <div className="absolute inset-0 bg-stone-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
@@ -148,7 +180,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
             }`}
           >
             {isOwner ? (
-              <span>{t('Your listing')}</span>
+              <span>{t('Tu producto')}</span>
             ) : justAdded ? (
               <>
                 <Check className="w-3.5 h-3.5" />
@@ -163,6 +195,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
           </button>
         </div>
       </div>
+      {deleteError && (
+        <p role="alert" className="border-t border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          {deleteError}
+        </p>
+      )}
     </div>
   );
 };

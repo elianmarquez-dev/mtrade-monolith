@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, MapPin, Key, Plus, Check, ShieldCheck, Phone, Mail } from 'lucide-react';
+import { X, User, MapPin, Plus, Check, Phone, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usersService } from '../services';
 import { UserAddress } from '../types';
@@ -7,7 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 export const UserProfileModal: React.FC = () => {
   const { t } = useLanguage();
-  const { session, profile, isProfileModalOpen, closeProfileModal, refreshProfile, loginAsDemoUser, loginAsDemoAdmin } = useAuth();
+  const { session, profile, isProfileModalOpen, closeProfileModal, refreshProfile } = useAuth();
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [name, setName] = useState(profile?.name || session?.name || '');
@@ -34,7 +34,7 @@ export const UserProfileModal: React.FC = () => {
       await usersService.updateProfile(session.id, { name, phone });
       await refreshProfile();
       setIsEditingProfile(false);
-      setStatusMsg(t('Perfil actualizado correctamente en Users Service.'));
+      setStatusMsg(t('Perfil actualizado correctamente.'));
       setTimeout(() => setStatusMsg(null), 2500);
     } catch (err: any) {
       console.error(err);
@@ -57,7 +57,7 @@ export const UserProfileModal: React.FC = () => {
         country: 'España',
         isDefault: false
       });
-      setStatusMsg(t('Nueva dirección registrada en Users Service.'));
+      setStatusMsg(t('Nueva dirección registrada.'));
       setTimeout(() => setStatusMsg(null), 2500);
     } catch (err: any) {
       console.error(err);
@@ -72,7 +72,7 @@ export const UserProfileModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-stone-900" />
             <h2 className="text-base font-bold text-stone-900">
-              {t('Mi Perfil y Cuenta (Users Service)')}
+              {t('Mi perfil y cuenta')}
             </h2>
           </div>
           <button
@@ -120,9 +120,6 @@ export const UserProfileModal: React.FC = () => {
             </div>
 
             <div className="text-right">
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                {t('Rol:')} {session.role}
-              </span>
               <div className="mt-2">
                 <button
                   onClick={() => setIsEditingProfile(!isEditingProfile)}
@@ -161,7 +158,7 @@ export const UserProfileModal: React.FC = () => {
                 type="submit"
                 className="px-4 py-2 bg-stone-900 text-white rounded-lg font-semibold hover:bg-stone-800 transition"
               >
-                {t('Guardar Cambios (PUT /api/users/{id})', { id: session.id })}
+                {t('Guardar cambios')}
               </button>
             </form>
           )}
@@ -171,7 +168,7 @@ export const UserProfileModal: React.FC = () => {
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-emerald-600" />
-                <span>{t('Libreta de Direcciones (Users Service)')}</span>
+                <span>{t('Mis direcciones')}</span>
               </h4>
               <button
                 onClick={() => setIsAddingAddress(!isAddingAddress)}
@@ -244,7 +241,7 @@ export const UserProfileModal: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-semibold transition"
                 >
-                  {t('Guardar Dirección (POST /api/users/addresses)')}
+                  {t('Guardar dirección')}
                 </button>
               </form>
             )}
@@ -277,38 +274,6 @@ export const UserProfileModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Auth Token Details */}
-          <div className="p-3.5 bg-stone-900 text-stone-300 rounded-xl text-xs space-y-1.5 font-mono">
-            <div className="flex items-center justify-between text-stone-400 text-[11px]">
-              <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                <Key className="w-3.5 h-3.5" />
-                {t('Auth Service JWT Token:')}
-              </span>
-              <span>Bearer 256-bit</span>
-            </div>
-            <p className="break-all text-[10px] text-stone-400 bg-stone-800/80 p-2 rounded">
-              {session.token}
-            </p>
-          </div>
-
-          {/* Quick Demo Role Switcher */}
-          <div className="pt-2 border-t border-stone-200 flex items-center justify-between text-xs">
-            <span className="text-stone-500 font-medium">{t('Alternar cuenta de prueba:')}</span>
-            <div className="flex gap-2">
-              <button
-                onClick={loginAsDemoUser}
-                className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-md font-semibold transition text-[11px]"
-              >
-                {t('Cliente (Camila)')}
-              </button>
-              <button
-                onClick={loginAsDemoAdmin}
-                className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-md font-semibold transition text-[11px]"
-              >
-                {t('Admin (Plataforma)')}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -88,7 +88,7 @@ export const CartDrawer: React.FC = () => {
                 </div>
                 <h3 className="text-base font-bold text-stone-800">{t('Tu carrito está vacío')}</h3>
                 <p className="text-xs text-stone-500 mt-1 max-w-xs">
-                  {t('Explora nuestro catálogo con productos de alta tecnología y añade lo que te guste.')}
+                  {t('Explora el catálogo y añade los productos que te gusten.')}
                 </p>
                 <button
                   onClick={closeCart}
@@ -197,7 +197,7 @@ export const CartDrawer: React.FC = () => {
               </button>
 
               <p className="text-[11px] text-center text-stone-500 mt-2">
-                {t('Conexión segura coordinada por Orders & Payments Services')}
+                {t('Pago seguro')}
               </p>
             </div>
           )}

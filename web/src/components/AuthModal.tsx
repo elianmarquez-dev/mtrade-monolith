@@ -12,8 +12,6 @@ export const AuthModal: React.FC = () => {
     openAuthModal,
     login,
     register,
-    loginAsDemoUser,
-    loginAsDemoAdmin,
     isLoading
   } = useAuth();
 
@@ -43,7 +41,7 @@ export const AuthModal: React.FC = () => {
         await register({ email, password, firstName, lastName });
       }
     } catch (err: any) {
-      setError(err.message || t('Error en Auth Service'));
+      setError(err.message || t('No se pudo completar el inicio de sesión.'));
     }
   };
 
@@ -55,7 +53,7 @@ export const AuthModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-emerald-600" />
             <h2 className="text-base font-bold text-stone-900">
-              {authModalMode === 'login' ? t('Iniciar Sesión (Auth Service)') : t('Crear Cuenta (Auth Service)')}
+              {authModalMode === 'login' ? t('Iniciar sesión') : t('Crear cuenta')}
             </h2>
           </div>
           <button
@@ -173,30 +171,6 @@ export const AuthModal: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Logins */}
-          <div className="mt-5 pt-4 border-t border-stone-200 text-xs">
-            <span className="block text-stone-500 font-semibold text-[11px] mb-2 text-center">
-              {t('ACCESO RÁPIDO CON CUENTAS DEMO:')}
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={loginAsDemoUser}
-                className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-left transition"
-              >
-                <span className="block font-bold text-stone-900">Camila R.</span>
-                <span className="text-[10px] text-stone-500">{t('Rol: Cliente')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={loginAsDemoAdmin}
-                className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-left transition"
-              >
-                <span className="block font-bold text-stone-900">Admin</span>
-                <span className="text-[10px] text-stone-500">{t('Rol: Administrador')}</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

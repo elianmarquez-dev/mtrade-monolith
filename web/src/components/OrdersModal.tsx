@@ -79,7 +79,7 @@ export const OrdersModal: React.FC = () => {
         <div className="p-5 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-stone-900" />
-            <h2 className="text-base font-bold text-stone-900">{t('Historial de Pedidos (Orders Service)')}</h2>
+            <h2 className="text-base font-bold text-stone-900">{t('Historial de pedidos')}</h2>
             <span className="text-xs bg-stone-200 text-stone-700 px-2 py-0.5 rounded-full font-semibold">
               {orders.length}
             </span>
@@ -105,14 +105,14 @@ export const OrdersModal: React.FC = () => {
         <div className="p-6">
           {isLoading ? (
             <div className="py-16 text-center text-xs text-stone-500">
-              {t('Cargando pedidos desde Orders Service...')}
+              {t('Cargando pedidos...')}
             </div>
           ) : orders.length === 0 ? (
             <div className="py-12 text-center">
               <Package className="w-12 h-12 text-stone-300 mx-auto mb-3" />
               <h3 className="text-sm font-bold text-stone-800">{t('No tienes pedidos registrados')}</h3>
               <p className="text-xs text-stone-500 mt-1 max-w-xs mx-auto">
-                {t('Realiza una compra para ver el seguimiento en tiempo real entre Orders y Payments.')}
+                {t('Cuando realices una compra, podrás consultar aquí el estado de tu pedido.')}
               </p>
             </div>
           ) : (

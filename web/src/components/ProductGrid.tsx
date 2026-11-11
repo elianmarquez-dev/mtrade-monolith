@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Filter, SlidersHorizontal, PackageX, Sparkles, RefreshCw } from 'lucide-react';
+import { SlidersHorizontal, PackageX, RefreshCw } from 'lucide-react';
 import { Product, ProductFilter } from '../types';
 import { productsService } from '../services';
 import { ProductCard } from './ProductCard';
@@ -8,10 +8,11 @@ import { useLanguage } from '../context/LanguageContext';
 interface ProductGridProps {
   searchQuery: string;
   onQuickView: (product: Product) => void;
+  onProductDeleted: () => void;
   refreshSignal?: number;
 }
 
-export const ProductGrid: React.FC<ProductGridProps> = ({ searchQuery, onQuickView, refreshSignal = 0 }) => {
+export const ProductGrid: React.FC<ProductGridProps> = ({ searchQuery, onQuickView, onProductDeleted, refreshSignal = 0 }) => {
   const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(['Todos']);
@@ -31,7 +32,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ searchQuery, onQuickVi
       }
     };
     fetchCats();
-  }, []);
+  }, [refreshSignal]);
 
   // Fetch products when filters or search change
   useEffect(() => {
@@ -121,9 +122,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ searchQuery, onQuickVi
             <> {t('para la búsqueda')} "<strong className="text-stone-900">{searchQuery}</strong>"</>
           )}
         </span>
-        <span className="font-mono text-[11px] text-stone-400">
-          {t('Products Service: 200 OK')}
-        </span>
       </div>
 
       {/* Products Grid */}
@@ -139,7 +137,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ searchQuery, onQuickVi
       ) : products.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {products.map((prod) => (
-            <ProductCard key={prod.id} product={prod} onQuickView={onQuickView} />
+            <ProductCard key={prod.id} product={prod} onQuickView={onQuickView} onDeleted={onProductDeleted} />
           ))}
         </div>
       ) : (

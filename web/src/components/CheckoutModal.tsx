@@ -176,7 +176,7 @@ export const CheckoutModal: React.FC = () => {
       setStep(4);
     } catch (err: any) {
       console.error('Checkout failure in modular services:', err);
-      setErrorMessage(err.message || t('Ocurrió un error al procesar la orden en los servicios.'));
+      setErrorMessage(err.message || t('Ocurrió un error al procesar la compra.'));
       setStep(2);
     } finally {
       setIsProcessing(false);
@@ -190,7 +190,7 @@ export const CheckoutModal: React.FC = () => {
         <div className="p-5 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-emerald-600" />
-            <h2 className="text-base font-bold text-stone-900">{t('Checkout Seguro Monolito')}</h2>
+            <h2 className="text-base font-bold text-stone-900">{t('Finalizar compra')}</h2>
           </div>
           {step !== 3 && (
             <button
@@ -212,7 +212,7 @@ export const CheckoutModal: React.FC = () => {
             <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[11px] font-bold">
               1
             </span>
-            <span>{t('Envío (Users)')}</span>
+            <span>{t('Envío')}</span>
           </div>
           <div className="h-0.5 w-8 bg-stone-200" />
           <div
@@ -223,7 +223,7 @@ export const CheckoutModal: React.FC = () => {
             <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[11px] font-bold">
               2
             </span>
-            <span>{t('Pago (Payments)')}</span>
+            <span>{t('Pago')}</span>
           </div>
           <div className="h-0.5 w-8 bg-stone-200" />
           <div
@@ -234,7 +234,7 @@ export const CheckoutModal: React.FC = () => {
             <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[11px] font-bold">
               3
             </span>
-            <span>{t('Confirmación (Orders)')}</span>
+            <span>{t('Confirmación')}</span>
           </div>
         </div>
 
@@ -252,7 +252,7 @@ export const CheckoutModal: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-emerald-600" />
-                  <span>{t('Dirección de Entrega (Users Service)')}</span>
+                  <span>{t('Dirección de entrega')}</span>
                 </h3>
                 {addresses.length > 0 && (
                   <button
@@ -369,7 +369,7 @@ export const CheckoutModal: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-emerald-600" />
-                  <span>{t('Método de Pago (Payments Service)')}</span>
+                  <span>{t('Método de pago')}</span>
                 </h3>
                 <span className="text-xs font-mono text-stone-400">SSL 256-Bit Encrypted</span>
               </div>
@@ -471,7 +471,7 @@ export const CheckoutModal: React.FC = () => {
                 <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-200 text-xs text-blue-900 space-y-1">
                   <p className="font-semibold">{t('Conexión con cuenta PayPal:')}</p>
                   <p className="text-stone-600">
-                    {t('Se autorizará un débito instantáneo de')} <strong>${total.toFixed(2)} USD</strong> {t('mediante el token de sesión de Payments Service.')}
+                    {t('Se autorizará un débito instantáneo de')} <strong>${total.toFixed(2)} USD</strong>.
                   </p>
                 </div>
               )}
@@ -480,7 +480,7 @@ export const CheckoutModal: React.FC = () => {
                 <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 text-xs text-stone-700 space-y-1">
                   <p className="font-semibold text-stone-900">{t('Transferencia Instantánea SEPA / Red Bancaria:')}</p>
                   <p className="text-stone-600">
-                    {t('El servicio de pagos emitirá una confirmación digital inmediata con código de autorización bancario.')}
+                    {t('Recibirás una confirmación digital con tu código de autorización bancario.')}
                   </p>
                 </div>
               )}
@@ -538,14 +538,8 @@ export const CheckoutModal: React.FC = () => {
                 </div>
               </div>
               <h3 className="text-base font-bold text-stone-900">
-                {t('Coordinando Monolito Modular...')}
+                {t('Procesando tu compra...')}
               </h3>
-              <div className="space-y-1 text-xs text-stone-500 font-mono max-w-xs mx-auto">
-                <p>{t('1. Users Service: validando cuenta...')}</p>
-                <p>{t('2. Orders Service: instanciando orden...')}</p>
-                <p>{t('3. Payments Service: procesando cargo...')}</p>
-                <p>{t('4. Products Service: reservando inventario...')}</p>
-              </div>
             </div>
           )}
 
@@ -560,7 +554,7 @@ export const CheckoutModal: React.FC = () => {
                   {t('¡Orden Confirmada con Éxito!')}
                 </h3>
                 <p className="text-xs text-stone-500 mt-0.5">
-                  {t('Procesada por los 5 servicios del Monolito Modular')}
+                  {t('Compra confirmada')}
                 </p>
               </div>
 
